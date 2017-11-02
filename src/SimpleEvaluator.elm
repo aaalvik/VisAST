@@ -66,21 +66,18 @@ evalExpr env expr =
             in
                 evalExpr newEnv e2
 
-        LetFun name arg e1 e2 ->
+        LetFun name argName e1 e2 ->
             let
-                v1 =
-                    evalExpr env e1
-
                 newEnv =
-                    { env | funEnv = Dict.insert name (Fun arg e1 env) env.funEnv }
+                    { env | funEnv = Dict.insert name (Fun argName e1 env) env.funEnv }
             in
-                evalExpr env e2
+                evalExpr newEnv e2
 
         --Lambda str body ->
         Apply funName arg ->
             case Dict.get funName env.funEnv of
                 Nothing ->
-                    -1
+                    Debug.log ("Function " ++ funName ++ " doesnt exist in env: " ++ toString env.funEnv) -1
 
                 Just (Fun argName body localEnv) ->
                     let
@@ -98,7 +95,7 @@ evalExpr env expr =
                     val
 
                 Nothing ->
-                    -1
+                    Debug.log ("Variable " ++ str ++ " not defined in env: " ++ toString env) -1
 
         Num num ->
             num
