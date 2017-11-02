@@ -66,26 +66,26 @@ evalExpr env expr =
             in
                 evalExpr newEnv e2
 
-        LetFun name argName e1 e2 ->
+        LetFun name argNames e1 e2 ->
             let
                 newEnv =
-                    { env | funEnv = Dict.insert name (Fun argName e1 env) env.funEnv }
+                    { env | funEnv = Dict.insert name (Fun argNames e1 env) env.funEnv }
             in
                 evalExpr newEnv e2
 
         --Lambda str body ->
-        Apply funName arg ->
+        Apply funName args ->
             case Dict.get funName env.funEnv of
                 Nothing ->
-                    Debug.log ("Function " ++ funName ++ " doesnt exist in env: " ++ toString env.funEnv) -1
+                    Debug.log ("Function " ++ funName ++ " doesnt exist in funEnv: " ++ toString env.funEnv) -1
 
-                Just (Fun argName body localEnv) ->
+                Just (Fun argNames body localEnv) ->
                     let
-                        valArg =
-                            evalExpr env arg
+                        argVals =
+                            List.map (\arg -> evalExpr env arg) args
 
                         newLocalEnv =
-                            { localEnv | numEnv = Dict.insert argName valArg localEnv.numEnv }
+                            addArgumentsToEnv argNames argVals localEnv
                     in
                         evalExpr newLocalEnv body
 
@@ -95,10 +95,22 @@ evalExpr env expr =
                     val
 
                 Nothing ->
-                    Debug.log ("Variable " ++ str ++ " not defined in env: " ++ toString env) -1
+                    Debug.log ("Variable " ++ str ++ " not defined in numEnv: " ++ toString env.numEnv) -1
 
         Num num ->
             num
 
         Error str ->
-            -1
+            Debug.log ("Hit an Error node: " ++ str) -1
+
+
+addArgumentsToEnv : ArgNames -> List Int -> Env -> Env
+addArgumentsToEnv argNames argVals env =
+    let
+        zipped =
+            List.map2 (,) argNames argVals
+
+        newNumEnv =
+            List.foldl (\( argName, argVal ) tempNumEnv -> Dict.insert argName argVal tempNumEnv) env.numEnv zipped
+    in
+        { env | numEnv = newNumEnv }
