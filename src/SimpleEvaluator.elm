@@ -17,8 +17,18 @@ eval expr =
 evalExpr : Env -> Expr -> ( Env, Expr )
 evalExpr env expr =
     case expr of
-        -- InParens e ->
-        --     evalExpr env e
+        Num num ->
+            ( env, Num num )
+
+        Var str ->
+            case Dict.get str env of
+                Just expr ->
+                    ( env, expr )
+
+                Nothing ->
+                    Error ("Variable " ++ str ++ " not defined in env: " ++ toString env)
+                        |> (,) env
+
         Neg e ->
             let
                 ( _, val ) =
@@ -108,25 +118,20 @@ evalExpr env expr =
             in
                 ( newEnv, val )
 
+        SetFun funName argNames body ->
+            let
+                fun =
+                    Fun argNames body env
+
+                newEnv =
+                    Dict.insert funName fun env
+            in
+                ( newEnv, fun )
+
         Fun argNames body localEnv ->
             Fun argNames body localEnv
                 |> (,) env
 
-        -- Let str e1 e2 ->
-        --     let
-        --         v1 =
-        --             evalExpr env e1
-        --         newEnv =
-        --             { env | numEnv = Dict.insert str v1 env.numEnv }
-        --     in
-        --         evalExpr newEnv e2
-        -- LetFun name argNames e1 e2 ->
-        --     let
-        --         newEnv =
-        --             { env | funEnv = Dict.insert name (Fun argNames e1 env) env.funEnv }
-        --     in
-        --         evalExpr newEnv e2
-        --Lambda str body ->
         Apply funName args ->
             case Dict.get funName env of
                 Nothing ->
@@ -150,17 +155,8 @@ evalExpr env expr =
                     (Error <| "Only functions can be applied to things, this was: " ++ toString a)
                         |> (,) env
 
-        Var str ->
-            case Dict.get str env of
-                Just expr ->
-                    ( env, expr )
-
-                Nothing ->
-                    Error ("Variable " ++ str ++ " not defined in env: " ++ toString env)
-                        |> (,) env
-
-        Num num ->
-            ( env, Num num )
+        Seq exprList ->
+            List.foldl (\expr ( newEnv, _ ) -> evalExpr newEnv expr) ( env, Num -1 ) exprList
 
         Error str ->
             ( env, Error str )
@@ -174,18 +170,6 @@ evalBinOp e1 e2 env op =
 
         ( ( _, other1 ), ( _, other2 ) ) ->
             Error <| "Both expressions in " ++ toString op ++ "-expression must be int: " ++ toString other1 ++ ", " ++ toString other2
-
-
-
--- addArgumentsToEnv : ArgNames -> List Int -> Env -> Env
--- addArgumentsToEnv argNames argVals env =
---     let
---         zipped =
---             List.map2 (,) argNames argVals
---         newNumEnv =
---             List.foldl (\( argName, argVal ) tempNumEnv -> Dict.insert argName argVal tempNumEnv) env.numEnv zipped
---     in
---         { env | numEnv = newNumEnv }
 
 
 typeOf : Expr -> Type

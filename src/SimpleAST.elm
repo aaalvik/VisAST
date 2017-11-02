@@ -14,11 +14,12 @@ type Expr
     | LessThan Expr Expr -- | "\<" Expr Expr
     | If Expr Expr Expr
     | Set String Expr
+    | SetFun String ArgNames Body 
     | Fun ArgNames Body Env
     --| Let VarName Expr Expr -- Var = Expr in Expr
     --| LetFun FunName ArgNames Expr Expr
     | Apply FunName Args -- removed parens
-
+    | Seq (List Expr)
     | Error String
 
 
