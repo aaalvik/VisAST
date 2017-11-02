@@ -108,7 +108,7 @@ evalExpr env expr =
                         )
                             |> (,) env
 
-        Set str expr ->
+        SetVar str expr ->
             let
                 ( _, val ) =
                     evalExpr env expr
@@ -166,7 +166,7 @@ evalBinOp : Expr -> Expr -> Env -> (Int -> Int -> Int) -> Expr
 evalBinOp e1 e2 env op =
     case ( evalExpr env e1, evalExpr env e2 ) of
         ( ( _, Num num1 ), ( _, Num num2 ) ) ->
-            Num <| op num1 <| num2
+            Num <| op num1 num2
 
         ( ( _, other1 ), ( _, other2 ) ) ->
             Error <| "Both expressions in " ++ toString op ++ "-expression must be int: " ++ toString other1 ++ ", " ++ toString other2
