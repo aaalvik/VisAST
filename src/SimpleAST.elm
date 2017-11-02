@@ -12,8 +12,8 @@ type Expr
     | Sub Expr Expr
     | LessThan Expr Expr
     | If Expr Expr Expr
-    | SetVar String Expr
-    | SetFun String ArgNames Expr
+    | SetVar String Expr -- set a = something
+    | SetFun String ArgNames Expr -- set foo ( a, b, c ) = something
     | Fun ArgNames Expr Env
     | Apply String Args
     | Seq (List Expr)

@@ -2,19 +2,139 @@ module SimpleParser exposing (parse)
 
 import SimpleAST exposing (..)
 import List exposing (..)
-import String exposing (words)
 import Stack exposing (..)
+import StackHelper exposing (..)
+import ParserHelper exposing (..)
+import Tokenizer exposing (tokenize)
 
 
 parse : String -> Expr
 parse str =
     let
+        exprs =
+            str
+                |> String.split ";"
+                |> map (parseLine << tokenize << String.toList)
+    in
+        case exprs of
+            [ expr ] ->
+                expr
+
+            xs ->
+                Seq exprs
+
+
+parseLine : List String -> Expr
+parseLine line =
+    let
         ( exprStack, opStack ) =
-            words str
-                |> Just
+            line
                 |> parseExpr Stack.initialise Stack.initialise
     in
         buildAST exprStack opStack
+
+
+parseExpr : ExprStack -> OpStack -> List String -> ( ExprStack, OpStack )
+parseExpr exprStack opStack strList =
+    case strList of
+        "+" :: rest ->
+            parseBinOp exprStack opStack Add PAdd rest
+
+        -- Just "-" -> Not supporting unary minus
+        "*" :: rest ->
+            parseBinOp exprStack opStack Mul PMul rest
+
+        "-" :: rest ->
+            parseBinOp exprStack opStack Sub PSub rest
+
+        "<" :: rest ->
+            parseBinOp exprStack opStack LessThan PLessThan rest
+
+        "if" :: rest ->
+            parseExpr exprStack (push (IfOp If) opStack) rest
+
+        "set" :: fName :: "(" :: rest ->
+            let
+                ( argNames, rest1 ) =
+                    readArgs [] rest
+            in
+                parseExpr exprStack (push (SetOp (SetFun fName argNames)) opStack) rest1
+
+        "set" :: vName :: rest ->
+            parseExpr exprStack (push (SetOp (SetVar vName)) opStack) rest
+
+        fName :: "(" :: rest ->
+            let
+                ( argStrs, rest1 ) =
+                    readArgs [] rest
+
+                exprArgs =
+                    map
+                        (\argStr ->
+                            case String.toInt argStr of
+                                Ok num ->
+                                    Num num
+
+                                Err _ ->
+                                    Var argStr
+                        )
+                        argStrs
+            in
+                parseExpr (push (Apply fName exprArgs) exprStack) opStack rest1
+
+        a :: rest ->
+            case String.toInt a of
+                Ok num ->
+                    parseExpr (push (Num num) exprStack) opStack rest
+
+                Err _ ->
+                    parseExpr (push (Var a) exprStack) opStack rest
+
+        _ ->
+            ( exprStack, opStack )
+
+
+readArgs : List String -> List String -> ( List String, List String )
+readArgs argsSoFar list =
+    case list of
+        ")" :: rest ->
+            ( argsSoFar, rest )
+
+        arg :: rest ->
+            readArgs (argsSoFar ++ [ arg ]) rest
+
+        [] ->
+            ( argsSoFar, [] )
+
+
+parseBinOp : ExprStack -> OpStack -> (Expr -> Expr -> Expr) -> PrecedenceType -> List String -> ( ExprStack, OpStack )
+parseBinOp exprStack opStack op pType rest =
+    let
+        ( leftExpr, exprStack1 ) =
+            Stack.pop exprStack
+
+        nextOpType =
+            lookaheadOp rest
+
+        ( exprStackRest, opStackRest ) =
+            parseExpr Stack.initialise Stack.initialise rest
+
+        ( mBottom, exprStackRest1 ) =
+            popBottom exprStackRest
+
+        newExpr =
+            applyBinOp op leftExpr mBottom
+
+        mergedExprStack =
+            Stack.mergeStacks (Stack.push newExpr exprStack1) exprStackRest1
+
+        mergedOpStack =
+            Stack.mergeStacks opStack opStackRest
+    in
+        if hasHigherPrecedence pType nextOpType then
+            ( mergedExprStack, mergedOpStack )
+        else
+            parseExpr exprStack (Stack.push (BinOp op) opStack) rest
 
 
 buildAST : ExprStack -> OpStack -> Expr
@@ -50,6 +170,18 @@ buildAST exprStack opStack =
                         Stack.push (applyIfOp op mThdLastExpr mSndLastExpr mLastExpr) exprStack3
                 in
                     buildAST newExprStack opStack1
+
+            ( Just (SetOp op), opStack1 ) ->
+                case mLastExpr of
+                    Just lastExpr ->
+                        let
+                            newExprStack =
+                                Stack.push (op lastExpr) exprStack1
+                        in
+                            buildAST newExprStack opStack1
+
+                    Nothing ->
+                        Error "Expression stack is empty"
 
             ( Nothing, _ ) ->
                 case Stack.top exprStack of
@@ -88,199 +220,3 @@ applyIfOp op mCond mThen mElse =
 
         ( _, _, _ ) ->
             Error "TODO fix applyBinOp"
-
-
-parseExpr : ExprStack -> OpStack -> Maybe (List String) -> ( ExprStack, OpStack )
-parseExpr exprStack opStack mStrList =
-    case mStrList of
-        Nothing ->
-            ( exprStack, opStack )
-
-        Just strList ->
-            case head strList of
-                Just "+" ->
-                    parseBinOp exprStack opStack Add PAdd (tail strList)
-
-                -- Just "-" -> Not supporting unary minus
-                Just "*" ->
-                    parseBinOp exprStack opStack Mul PMul (tail strList)
-
-                Just "-" ->
-                    parseBinOp exprStack opStack Sub PSub (tail strList)
-
-                Just "<" ->
-                    parseBinOp exprStack opStack LessThan PLessThan (tail strList)
-
-                Just "if" ->
-                    parseExpr exprStack (push (IfOp If) opStack) (tail strList)
-
-                Just "then" ->
-                    parseExpr exprStack opStack (tail strList)
-
-                Just "else" ->
-                    parseExpr exprStack opStack (tail strList)
-
-                Just a ->
-                    case String.toInt a of
-                        Ok num ->
-                            parseExpr (push (Num num) exprStack) opStack (tail strList)
-
-                        Err _ ->
-                            parseExpr (push (Var a) exprStack) opStack (tail strList)
-
-                _ ->
-                    ( exprStack, opStack )
-
-
-parseBinOp : ExprStack -> OpStack -> (Expr -> Expr -> Expr) -> PrecedenceType -> Maybe (List String) -> ( ExprStack, OpStack )
-parseBinOp exprStack opStack op pType mRest =
-    let
-        ( leftExpr, exprStack1 ) =
-            Stack.pop exprStack
-
-        mNextOpType =
-            lookaheadOp mRest
-
-        ( exprStackRest, opStackRest ) =
-            parseExpr Stack.initialise Stack.initialise mRest
-
-        ( mBottom, exprStackRest1 ) =
-            popBottom exprStackRest
-
-        newExpr =
-            applyBinOp op leftExpr mBottom
-
-        mergedExprStack =
-            Stack.mergeStacks (Stack.push newExpr exprStack1) exprStackRest1
-
-        mergedOpStack =
-            Stack.mergeStacks opStack opStackRest
-    in
-        if hasHigherPrecedence pType mNextOpType then
-            ( mergedExprStack, mergedOpStack )
-        else
-            parseExpr exprStack (Stack.push (BinOp op) opStack) mRest
-
-
-popBottom : ExprStack -> ( Maybe Expr, ExprStack )
-popBottom stack =
-    let
-        stackList =
-            Stack.toList stack
-
-        ( _, mLast, init ) =
-            foldr
-                (\x ( isLast, last, list ) ->
-                    if isLast then
-                        ( False, (Just x), list )
-                    else
-                        ( False, last, x :: list )
-                )
-                ( True, Nothing, [] )
-                stackList
-    in
-        ( mLast, Stack.listToStack init )
-
-
-lookaheadOp : Maybe (List String) -> Maybe PrecedenceType
-lookaheadOp mList =
-    case mList of
-        Nothing ->
-            Nothing
-
-        Just list ->
-            case head list of
-                Nothing ->
-                    Nothing
-
-                Just "(" ->
-                    Just PParens
-
-                Just ")" ->
-                    Just PParens
-
-                Just "*" ->
-                    Just PMul
-
-                Just "+" ->
-                    Just PAdd
-
-                Just "-" ->
-                    Just PSub
-
-                Just "if" ->
-                    Just PIf
-
-                Just _ ->
-                    lookaheadOp (tail list)
-
-
-hasHigherPrecedence : PrecedenceType -> Maybe PrecedenceType -> Bool
-hasHigherPrecedence p1 mp2 =
-    case mp2 of
-        Just p2 ->
-            precedenceNumber p1 <= precedenceNumber p2
-
-        Nothing ->
-            False
-
-
-
---highest precedence == 1, then increasing number for decreasing precedence
-
-
-precedenceNumber : PrecedenceType -> Int
-precedenceNumber pType =
-    case pType of
-        PParens ->
-            1
-
-        --PNeg -> 2
-        -- PApply -> 3 TODO Fix
-        PMul ->
-            2
-
-        PAdd ->
-            3
-
-        PSub ->
-            3
-
-        PLessThan ->
-            4
-
-        PIf ->
-            5
-
-        _ ->
-            6
-
-
-type PrecedenceType
-    = PParens
-      --| PNeg
-      --| PApply
-    | PMul
-    | PAdd
-    | PSub
-    | PLessThan
-    | PIf
-      --| PLet
-      --| PLetFun
-      --| PLambda
-    | PVar
-    | PNum
-
-
-type alias ExprStack =
-    Stack Expr
-
-
-type alias OpStack =
-    Stack Op
-
-
-type Op
-    = BinOp (Expr -> Expr -> Expr)
-    | UnOp (Expr -> Expr)
-    | IfOp (Expr -> Expr -> Expr -> Expr)

@@ -1,17 +1,22 @@
 module SimpleEvaluator exposing (eval)
 
 import SimpleAST exposing (..)
+import SimpleParser exposing (parse)
 import Dict exposing (..)
 
 
-eval : Expr -> Int
-eval expr =
-    case evalExpr Dict.empty expr of
-        ( _, Num num ) ->
-            num
+eval : String -> Int
+eval str =
+    let
+        expr =
+            parse str
+    in
+        case evalExpr Dict.empty expr of
+            ( _, Num num ) ->
+                num
 
-        ( _, a ) ->
-            Debug.log ("evaluated expression must return Int in the end, got this: " ++ toString a) -1
+            ( _, a ) ->
+                Debug.log ("evaluated expression must return Int in the end, got this: " ++ toString a) -1
 
 
 evalExpr : Env -> Expr -> ( Env, Expr )
