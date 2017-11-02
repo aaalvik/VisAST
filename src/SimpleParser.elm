@@ -20,34 +20,34 @@ parse str =
 buildAST : ExprStack -> OpStack -> Expr
 buildAST exprStack opStack =
     let
-        ( mFirstExpr, exprStack1 ) =
+        ( mLastExpr, exprStack1 ) =
             Stack.pop exprStack
 
-        ( mSecondExpr, exprStack2 ) =
+        ( mSndLastExpr, exprStack2 ) =
             Stack.pop exprStack1
 
-        ( mThirdExpr, exprStack3 ) =
+        ( mThdLastExpr, exprStack3 ) =
             Stack.pop exprStack2
     in
         case Stack.pop opStack of
             ( Just (BinOp op), opStack1 ) ->
                 let
                     newExprStack =
-                        Stack.push (applyBinOp op mFirstExpr mSecondExpr) exprStack2
+                        Stack.push (applyBinOp op mSndLastExpr mLastExpr) exprStack2
                 in
                     buildAST newExprStack opStack1
 
             ( Just (UnOp op), opStack1 ) ->
                 let
                     newExprStack =
-                        Stack.push (applyUnOp op mFirstExpr) exprStack1
+                        Stack.push (applyUnOp op mLastExpr) exprStack1
                 in
                     buildAST newExprStack opStack1
 
             ( Just (IfOp op), opStack1 ) ->
                 let
                     newExprStack =
-                        Stack.push (applyIfOp op mFirstExpr mSecondExpr mThirdExpr) exprStack3
+                        Stack.push (applyIfOp op mThdLastExpr mSndLastExpr mLastExpr) exprStack3
                 in
                     buildAST newExprStack opStack1
 
@@ -81,10 +81,10 @@ applyUnOp op mExpr =
 
 
 applyIfOp : (Expr -> Expr -> Expr -> Expr) -> Maybe Expr -> Maybe Expr -> Maybe Expr -> Expr
-applyIfOp op mThird mSecond mFirst =
-    case ( mFirst, mSecond, mThird ) of
-        ( Just first, Just second, Just third ) ->
-            op first second third
+applyIfOp op mCond mThen mElse =
+    case ( mCond, mThen, mElse ) of
+        ( Just condExpr, Just thenExpr, Just elseExpr ) ->
+            op condExpr thenExpr elseExpr
 
         ( _, _, _ ) ->
             Error "TODO fix applyBinOp"
@@ -101,13 +101,15 @@ parseExpr exprStack opStack mStrList =
                 Just "+" ->
                     parseBinOp exprStack opStack Add PAdd (tail strList)
 
-                --parseExpr exprStack (push (BinOp Add) opStack) (tail strList)
+                -- Just "-" -> Not supporting unary minus
                 Just "*" ->
                     parseBinOp exprStack opStack Mul PMul (tail strList)
 
-                --parseExpr exprStack (push (BinOp Mul) opStack) (tail strList)
                 Just "-" ->
                     parseBinOp exprStack opStack Sub PSub (tail strList)
+
+                Just "<" ->
+                    parseBinOp exprStack opStack LessThan PLessThan (tail strList)
 
                 Just "if" ->
                     parseExpr exprStack (push (IfOp If) opStack) (tail strList)
@@ -244,12 +246,14 @@ precedenceNumber pType =
         PSub ->
             3
 
-        -- P "\<"
-        PIf ->
+        PLessThan ->
             4
 
-        _ ->
+        PIf ->
             5
+
+        _ ->
+            6
 
 
 type PrecedenceType
@@ -259,7 +263,7 @@ type PrecedenceType
     | PMul
     | PAdd
     | PSub
-      --| P "\<"
+    | PLessThan
     | PIf
       --| PLet
       --| PLetFun
