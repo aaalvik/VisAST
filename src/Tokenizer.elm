@@ -24,6 +24,13 @@ tokenize charList =
         'i' :: 'f' :: rest ->
             "if" :: tokenize rest
 
+        't' :: 'h' :: 'e' :: 'n' :: rest ->
+            "then" :: tokenize rest
+
+        'e' :: 'l' :: 's' :: 'e' :: rest ->
+            tokenize rest
+
+        -- TODO: Fix parentes rundt if
         '*' :: rest ->
             "*" :: tokenize rest
 
@@ -44,26 +51,26 @@ tokenize charList =
                 ( lamVar, rest1 ) =
                     span (\c -> Char.isLower c || Char.isUpper c) (removeWs rest)
             in
-                case removeWs rest1 of
-                    '-' :: '>' :: rest2 ->
-                        "\\" :: String.fromList lamVar :: "->" :: tokenize rest2
+            case removeWs rest1 of
+                '-' :: '>' :: rest2 ->
+                    "\\" :: String.fromList lamVar :: "->" :: tokenize rest2
 
-                    _ ->
-                        Debug.log ("ERROR: Lambda backslash without arrow: " ++ String.fromList rest1) []
+                _ ->
+                    Debug.log ("ERROR: Lambda backslash without arrow: " ++ String.fromList rest1) []
 
         (c :: rest) as str ->
             if Char.isDigit c then
                 let
                     ( num, rest1 ) =
-                        span (Char.isDigit) str
+                        span Char.isDigit str
                 in
-                    String.fromList num :: tokenize rest1
+                String.fromList num :: tokenize rest1
             else if Char.isLower c then
                 let
                     ( var, rest1 ) =
                         span (\ch -> Char.isUpper ch || Char.isLower ch) str
                 in
-                    String.fromList var :: tokenize rest1
+                String.fromList var :: tokenize rest1
             else
                 Debug.log ("Input neither numeric nor string: " ++ String.fromList str) []
 
@@ -97,7 +104,7 @@ takeWhile predicate list =
             []
 
         x :: xs ->
-            if (predicate x) then
+            if predicate x then
                 x :: takeWhile predicate xs
             else
                 []
@@ -110,7 +117,7 @@ dropWhile predicate list =
             []
 
         x :: xs ->
-            if (predicate x) then
+            if predicate x then
                 dropWhile predicate xs
             else
                 list

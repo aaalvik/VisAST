@@ -1,10 +1,10 @@
 module SimpleParser exposing (parse)
 
-import SimpleAST exposing (..)
 import List exposing (..)
+import ParserHelper exposing (..)
+import SimpleAST exposing (..)
 import Stack exposing (..)
 import StackHelper exposing (..)
-import ParserHelper exposing (..)
 import Tokenizer exposing (tokenize)
 
 
@@ -16,12 +16,12 @@ parse str =
                 |> String.split ";"
                 |> map (parseLine << tokenize << String.toList)
     in
-        case exprs of
-            [ expr ] ->
-                expr
+    case exprs of
+        [ expr ] ->
+            expr
 
-            xs ->
-                Seq exprs
+        xs ->
+            Seq exprs
 
 
 parseLine : List String -> Expr
@@ -31,7 +31,7 @@ parseLine line =
             line
                 |> parseExpr Stack.initialise Stack.initialise
     in
-        buildAST exprStack opStack
+    buildAST exprStack opStack
 
 
 parseExpr : ExprStack -> OpStack -> List String -> ( ExprStack, OpStack )
@@ -50,23 +50,34 @@ parseExpr exprStack opStack strList =
         "<" :: rest ->
             parseBinOp exprStack opStack LessThan PLessThan rest
 
-        "if" :: rest ->
-            parseExpr exprStack (push (IfOp If) opStack) rest
+        "if" :: "(" :: rest ->
+            let
+                ( condStrs, rest1 ) =
+                    readTilClosingParens [] rest
+
+                condExpr =
+                    parseExpr Stack.initialise Stack.initialise condStrs
+                        |> uncurry buildAST
+            in
+            parseExpr exprStack (push (IfOp <| If condExpr) opStack) rest1
+
+        "if" :: _ ->
+            Debug.log "Invalid syntax: Must have parenthes around if-condition!" ( exprStack, opStack )
 
         "set" :: fName :: "(" :: rest ->
             let
                 ( argNames, rest1 ) =
-                    readArgs [] rest
+                    readTilClosingParens [] rest
             in
-                parseExpr exprStack (push (SetOp (SetFun fName argNames)) opStack) rest1
+            parseExpr exprStack (push (SetOp <| SetFun fName argNames) opStack) rest1
 
         "set" :: vName :: rest ->
-            parseExpr exprStack (push (SetOp (SetVar vName)) opStack) rest
+            parseExpr exprStack (push (SetOp <| SetVar vName) opStack) rest
 
         fName :: "(" :: rest ->
             let
                 ( argStrs, rest1 ) =
-                    readArgs [] rest
+                    readTilClosingParens [] rest
 
                 exprArgs =
                     map
@@ -80,7 +91,7 @@ parseExpr exprStack opStack strList =
                         )
                         argStrs
             in
-                parseExpr (push (Apply fName exprArgs) exprStack) opStack rest1
+            parseExpr (push (Apply fName exprArgs) exprStack) opStack rest1
 
         a :: rest ->
             case String.toInt a of
@@ -90,21 +101,21 @@ parseExpr exprStack opStack strList =
                 Err _ ->
                     parseExpr (push (Var a) exprStack) opStack rest
 
-        _ ->
+        [] ->
             ( exprStack, opStack )
 
 
-readArgs : List String -> List String -> ( List String, List String )
-readArgs argsSoFar list =
+readTilClosingParens : List String -> List String -> ( List String, List String )
+readTilClosingParens readSoFar list =
     case list of
         ")" :: rest ->
-            ( argsSoFar, rest )
+            ( readSoFar, rest )
 
-        arg :: rest ->
-            readArgs (argsSoFar ++ [ arg ]) rest
+        str :: rest ->
+            readTilClosingParens (readSoFar ++ [ str ]) rest
 
         [] ->
-            ( argsSoFar, [] )
+            ( readSoFar, [] )
 
 
 parseBinOp : ExprStack -> OpStack -> (Expr -> Expr -> Expr) -> PrecedenceType -> List String -> ( ExprStack, OpStack )
@@ -131,10 +142,10 @@ parseBinOp exprStack opStack op pType rest =
         mergedOpStack =
             Stack.mergeStacks opStack opStackRest
     in
-        if hasHigherPrecedence pType nextOpType then
-            ( mergedExprStack, mergedOpStack )
-        else
-            parseExpr exprStack (Stack.push (BinOp op) opStack) rest
+    if hasHigherPrecedence pType nextOpType then
+        ( mergedExprStack, mergedOpStack )
+    else
+        parseExpr exprStack (Stack.push (BinOp op) opStack) rest
 
 
 buildAST : ExprStack -> OpStack -> Expr
@@ -149,47 +160,47 @@ buildAST exprStack opStack =
         ( mThdLastExpr, exprStack3 ) =
             Stack.pop exprStack2
     in
-        case Stack.pop opStack of
-            ( Just (BinOp op), opStack1 ) ->
-                let
-                    newExprStack =
-                        Stack.push (applyBinOp op mSndLastExpr mLastExpr) exprStack2
-                in
+    case Stack.pop opStack of
+        ( Just (BinOp op), opStack1 ) ->
+            let
+                newExprStack =
+                    Stack.push (applyBinOp op mSndLastExpr mLastExpr) exprStack2
+            in
+            buildAST newExprStack opStack1
+
+        ( Just (UnOp op), opStack1 ) ->
+            let
+                newExprStack =
+                    Stack.push (applyUnOp op mLastExpr) exprStack1
+            in
+            buildAST newExprStack opStack1
+
+        ( Just (IfOp op), opStack1 ) ->
+            let
+                newExprStack =
+                    Stack.push (applyBinOp op mSndLastExpr mLastExpr) exprStack2
+            in
+            buildAST newExprStack opStack1
+
+        ( Just (SetOp op), opStack1 ) ->
+            case mLastExpr of
+                Just lastExpr ->
+                    let
+                        newExprStack =
+                            Stack.push (op lastExpr) exprStack1
+                    in
                     buildAST newExprStack opStack1
 
-            ( Just (UnOp op), opStack1 ) ->
-                let
-                    newExprStack =
-                        Stack.push (applyUnOp op mLastExpr) exprStack1
-                in
-                    buildAST newExprStack opStack1
+                Nothing ->
+                    Error "Expression stack is empty"
 
-            ( Just (IfOp op), opStack1 ) ->
-                let
-                    newExprStack =
-                        Stack.push (applyIfOp op mThdLastExpr mSndLastExpr mLastExpr) exprStack3
-                in
-                    buildAST newExprStack opStack1
+        ( Nothing, _ ) ->
+            case Stack.top exprStack of
+                Just expr ->
+                    expr
 
-            ( Just (SetOp op), opStack1 ) ->
-                case mLastExpr of
-                    Just lastExpr ->
-                        let
-                            newExprStack =
-                                Stack.push (op lastExpr) exprStack1
-                        in
-                            buildAST newExprStack opStack1
-
-                    Nothing ->
-                        Error "Expression stack is empty"
-
-            ( Nothing, _ ) ->
-                case Stack.top exprStack of
-                    Just expr ->
-                        expr
-
-                    Nothing ->
-                        Error "Expression stack was empty at the end"
+                Nothing ->
+                    Error "Expression stack was empty at the end"
 
 
 applyBinOp : (Expr -> Expr -> Expr) -> Maybe Expr -> Maybe Expr -> Expr
@@ -199,7 +210,7 @@ applyBinOp op mLeft mRight =
             op left right
 
         ( _, _ ) ->
-            Error "TODO fix applyBinOp"
+            Error <| "Binary operator " ++ toString op ++ " needs two arguments, but some were Nothing"
 
 
 applyUnOp : (Expr -> Expr) -> Maybe Expr -> Expr
@@ -212,11 +223,11 @@ applyUnOp op mExpr =
             Error "TODO fix applyUnOp"
 
 
-applyIfOp : (Expr -> Expr -> Expr -> Expr) -> Maybe Expr -> Maybe Expr -> Maybe Expr -> Expr
-applyIfOp op mCond mThen mElse =
-    case ( mCond, mThen, mElse ) of
-        ( Just condExpr, Just thenExpr, Just elseExpr ) ->
-            op condExpr thenExpr elseExpr
 
-        ( _, _, _ ) ->
-            Error "TODO fix applyBinOp"
+-- applyIfOp : (Expr -> Expr -> Expr) -> Maybe Expr -> Maybe Expr -> Expr
+-- applyIfOp op mThen mElse =
+--     case ( mThen, mElse ) of
+--         ( Just thenExpr, Just elseExpr ) ->
+--             op thenExpr elseExpr
+--         ( _, _ ) ->
+--             Error "TODO fix applyBinOp"

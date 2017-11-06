@@ -10,6 +10,7 @@ type PrecedenceType
     | PSub
     | PLessThan
     | PIf
+    | PSet
       --| PLet
       --| PLetFun
       --| PLambda
@@ -43,6 +44,9 @@ lookaheadOp list =
 
         "if" :: _ ->
             PIf
+
+        "set" :: _ ->
+            PSet
 
         _ :: rest ->
             lookaheadOp rest
@@ -78,6 +82,9 @@ precedenceNumber pType =
 
         PIf ->
             5
+
+        PSet ->
+            6
 
         PLast ->
             1000

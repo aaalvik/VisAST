@@ -1,7 +1,7 @@
 module StackHelper exposing (..)
 
-import Stack exposing (Stack)
 import SimpleAST exposing (..)
+import Stack exposing (Stack)
 
 
 type alias ExprStack =
@@ -15,7 +15,7 @@ type alias OpStack =
 type Op
     = BinOp (Expr -> Expr -> Expr)
     | UnOp (Expr -> Expr)
-    | IfOp (Expr -> Expr -> Expr -> Expr)
+    | IfOp (Expr -> Expr -> Expr)
     | SetOp (Expr -> Expr)
 
 
@@ -29,11 +29,11 @@ popBottom stack =
             List.foldr
                 (\x ( isLast, last, list ) ->
                     if isLast then
-                        ( False, (Just x), list )
+                        ( False, Just x, list )
                     else
                         ( False, last, x :: list )
                 )
                 ( True, Nothing, [] )
                 stackList
     in
-        ( mLast, Stack.listToStack init )
+    ( mLast, Stack.listToStack init )
