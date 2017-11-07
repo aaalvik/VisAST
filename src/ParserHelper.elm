@@ -3,17 +3,12 @@ module ParserHelper exposing (..)
 
 type PrecedenceType
     = PParens
-      --| PNeg
-      --| PApply
     | PMul
     | PAdd
     | PSub
     | PLessThan
     | PIf
     | PSet
-      --| PLet
-      --| PLetFun
-      --| PLambda
     | PVar
     | PNum
     | PLast

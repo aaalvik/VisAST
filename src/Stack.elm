@@ -1,28 +1,25 @@
-module Stack exposing (initialise, push, pop, toList, listToStack, top, mergeStacks, Stack)
+module Stack exposing (..)
 
-{-| This library implements a stack data structure in Elm, allowing you to worry more about your business logic and less about implementing common adts.
-
-
-# Definition
-
-@docs Stack
+import SimpleAST exposing (Expr)
 
 
-# Initialisation
-
-@docs initialise
-
-
-# Common Helpers
-
-@docs pop, push, toList, top
-
--}
-
-
-{-| -}
 type Stack a
     = Stack (List a)
+
+
+type alias ExprStack =
+    Stack Expr
+
+
+type alias OpStack =
+    Stack Op
+
+
+type Op
+    = BinOp (Expr -> Expr -> Expr)
+    | UnOp (Expr -> Expr)
+    | IfOp (Expr -> Expr -> Expr)
+    | SetOp (Expr -> Expr)
 
 
 {-| Initialise an empty stack.
@@ -63,6 +60,26 @@ pop (Stack stack) =
 
         head :: tail ->
             ( Just head, Stack tail )
+
+
+popBottom : ExprStack -> ( Maybe Expr, ExprStack )
+popBottom stack =
+    let
+        stackList =
+            toList stack
+
+        ( _, mLast, init ) =
+            List.foldr
+                (\x ( isLast, last, list ) ->
+                    if isLast then
+                        ( False, Just x, list )
+                    else
+                        ( False, last, x :: list )
+                )
+                ( True, Nothing, [] )
+                stackList
+    in
+    ( mLast, listToStack init )
 
 
 listToStack : List a -> Stack a

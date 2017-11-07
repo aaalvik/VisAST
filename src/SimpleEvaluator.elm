@@ -1,8 +1,8 @@
 module SimpleEvaluator exposing (eval)
 
+import Dict
 import SimpleAST exposing (..)
 import SimpleParser exposing (parse)
-import Dict exposing (..)
 
 
 eval : String -> Int
@@ -11,12 +11,12 @@ eval str =
         expr =
             parse str
     in
-        case evalExpr Dict.empty expr of
-            ( _, Num num ) ->
-                num
+    case evalExpr Dict.empty expr of
+        ( _, Num num ) ->
+            num
 
-            ( _, a ) ->
-                Debug.log ("evaluated expression must return Int in the end, got this: " ++ toString a) -1
+        ( _, a ) ->
+            Debug.log ("evaluated expression must return Int in the end, got this: " ++ toString a) -1
 
 
 evalExpr : Env -> Expr -> ( Env, Expr )
@@ -39,15 +39,15 @@ evalExpr env expr =
                 ( _, val ) =
                     evalExpr env e
             in
-                case val of
-                    Num num ->
-                        -num
-                            |> Num
-                            |> (,) env
+            case val of
+                Num num ->
+                    -num
+                        |> Num
+                        |> (,) env
 
-                    other ->
-                        (Error <| "Cannot negate something other than int: " ++ toString other)
-                            |> (,) env
+                other ->
+                    (Error <| "Cannot negate something other than int: " ++ toString other)
+                        |> (,) env
 
         Add e1 e2 ->
             evalBinOp e1 e2 env (+)
@@ -84,34 +84,34 @@ evalExpr env expr =
                 ( _, vElse ) =
                     evalExpr env eElse
             in
-                case vBool of
-                    Num bool ->
-                        if typeOf vThen /= typeOf vElse then
-                            (Error <|
-                                "Type of then and else branch in if must be the same: "
-                                    ++ toString (typeOf vThen)
-                                    ++ " : "
-                                    ++ toString vThen
-                                    ++ ", "
-                                    ++ toString (typeOf vElse)
-                                    ++ (toString vElse)
-                            )
-                                |> (,) env
-                        else if bool /= 0 then
-                            vThen
-                                |> (,) env
-                        else
-                            vElse
-                                |> (,) env
-
-                    other ->
+            case vBool of
+                Num bool ->
+                    if typeOf vThen /= typeOf vElse then
                         (Error <|
-                            "Type of condition in if must be Num, but was: "
-                                ++ toString (typeOf other)
+                            "Type of then and else branch in if must be the same: "
+                                ++ toString (typeOf vThen)
                                 ++ " : "
-                                ++ toString other
+                                ++ toString vThen
+                                ++ ", "
+                                ++ toString (typeOf vElse)
+                                ++ toString vElse
                         )
                             |> (,) env
+                    else if bool /= 0 then
+                        vThen
+                            |> (,) env
+                    else
+                        vElse
+                            |> (,) env
+
+                other ->
+                    (Error <|
+                        "Type of condition in if must be Num, but was: "
+                            ++ toString (typeOf other)
+                            ++ " : "
+                            ++ toString other
+                    )
+                        |> (,) env
 
         SetVar str expr ->
             let
@@ -121,7 +121,7 @@ evalExpr env expr =
                 newEnv =
                     Dict.insert str val env
             in
-                ( newEnv, val )
+            ( newEnv, val )
 
         SetFun funName argNames body ->
             let
@@ -131,7 +131,7 @@ evalExpr env expr =
                 newEnv =
                     Dict.insert funName fun env
             in
-                ( newEnv, fun )
+            ( newEnv, fun )
 
         Fun argNames body localEnv ->
             Fun argNames body localEnv
@@ -154,7 +154,7 @@ evalExpr env expr =
                         newLocalEnv =
                             List.foldl (\( name, val ) newEnv -> Dict.insert name val newEnv) localEnv namesAndVals
                     in
-                        evalExpr newLocalEnv body
+                    evalExpr newLocalEnv body
 
                 Just a ->
                     (Error <| "Only functions can be applied to things, this was: " ++ toString a)

@@ -30,7 +30,6 @@ tokenize charList =
         'e' :: 'l' :: 's' :: 'e' :: rest ->
             tokenize rest
 
-        -- TODO: Fix parentes rundt if
         '*' :: rest ->
             "*" :: tokenize rest
 

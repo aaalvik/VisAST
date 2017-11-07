@@ -1,10 +1,8 @@
 module SimpleParser exposing (parse)
 
-import List exposing (..)
 import ParserHelper exposing (..)
 import SimpleAST exposing (..)
 import Stack exposing (..)
-import StackHelper exposing (..)
 import Tokenizer exposing (tokenize)
 
 
@@ -14,7 +12,7 @@ parse str =
         exprs =
             str
                 |> String.split ";"
-                |> map (parseLine << tokenize << String.toList)
+                |> List.map (parseLine << tokenize << String.toList)
     in
     case exprs of
         [ expr ] ->
@@ -25,13 +23,8 @@ parse str =
 
 
 parseLine : List String -> Expr
-parseLine line =
-    let
-        ( exprStack, opStack ) =
-            line
-                |> parseExpr Stack.initialise Stack.initialise
-    in
-    buildAST exprStack opStack
+parseLine =
+    uncurry buildAST << parseExpr Stack.initialise Stack.initialise
 
 
 parseExpr : ExprStack -> OpStack -> List String -> ( ExprStack, OpStack )
@@ -40,12 +33,12 @@ parseExpr exprStack opStack strList =
         "+" :: rest ->
             parseBinOp exprStack opStack Add PAdd rest
 
-        -- Just "-" -> Not supporting unary minus
+        -- "-" -> Not supporting unary minus
         "*" :: rest ->
             parseBinOp exprStack opStack Mul PMul rest
 
         "-" :: rest ->
-            parseBinOp exprStack opStack Sub PSub rest
+            Debug.log ("Exprstack: " ++ toString exprStack) parseBinOp exprStack opStack Sub PSub rest
 
         "<" :: rest ->
             parseBinOp exprStack opStack LessThan PLessThan rest
@@ -80,7 +73,7 @@ parseExpr exprStack opStack strList =
                     readTilClosingParens [] rest
 
                 exprArgs =
-                    map
+                    List.map
                         (\argStr ->
                             case String.toInt argStr of
                                 Ok num ->
@@ -192,7 +185,7 @@ buildAST exprStack opStack =
                     buildAST newExprStack opStack1
 
                 Nothing ->
-                    Error "Expression stack is empty"
+                    Error "Expression stack is empty when trying to make a Set-node"
 
         ( Nothing, _ ) ->
             case Stack.top exprStack of
@@ -200,7 +193,7 @@ buildAST exprStack opStack =
                     expr
 
                 Nothing ->
-                    Error "Expression stack was empty at the end"
+                    Error "Expression stack was empty at the end, have nothing to return"
 
 
 applyBinOp : (Expr -> Expr -> Expr) -> Maybe Expr -> Maybe Expr -> Expr
@@ -210,7 +203,7 @@ applyBinOp op mLeft mRight =
             op left right
 
         ( _, _ ) ->
-            Error <| "Binary operator " ++ toString op ++ " needs two arguments, but some were Nothing"
+            Error <| "Binary operator " ++ toString op ++ " needs two arguments, but some were Nothing."
 
 
 applyUnOp : (Expr -> Expr) -> Maybe Expr -> Expr
@@ -220,14 +213,4 @@ applyUnOp op mExpr =
             op expr
 
         Nothing ->
-            Error "TODO fix applyUnOp"
-
-
-
--- applyIfOp : (Expr -> Expr -> Expr) -> Maybe Expr -> Maybe Expr -> Expr
--- applyIfOp op mThen mElse =
---     case ( mThen, mElse ) of
---         ( Just thenExpr, Just elseExpr ) ->
---             op thenExpr elseExpr
---         ( _, _ ) ->
---             Error "TODO fix applyBinOp"
+            Error <| "Unary operator " ++ toString op ++ " needs one argument, but arguments was Nothing."
