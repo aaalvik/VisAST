@@ -19,16 +19,19 @@ tokenize charList =
         '=' :: rest ->
             "=" :: tokenize rest
 
-        's' :: 'e' :: 't' :: rest ->
+        's' :: 'e' :: 't' :: ' ' :: rest ->
             "set" :: tokenize rest
 
-        'i' :: 'f' :: rest ->
+        'f' :: 'u' :: 'n' :: 'c' :: 't' :: 'i' :: 'o' :: 'n' :: ' ' :: rest ->
+            "function" :: tokenize rest
+
+        'i' :: 'f' :: ' ' :: rest ->
             "if" :: tokenize rest
 
-        't' :: 'h' :: 'e' :: 'n' :: rest ->
+        't' :: 'h' :: 'e' :: 'n' :: ' ' :: rest ->
             "then" :: tokenize rest
 
-        'e' :: 'l' :: 's' :: 'e' :: rest ->
+        'e' :: 'l' :: 's' :: 'e' :: ' ' :: rest ->
             "else" :: tokenize rest
 
         '*' :: rest ->

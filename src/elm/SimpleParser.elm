@@ -67,7 +67,7 @@ parseExpr exprStack opStack strList =
             parseExpr exprStack (push (IfOp <| If condExpr) opStack) (thenStrs ++ rest2)
 
         {- function f a b c = something -}
-        "function" :: fName :: " " :: rest ->
+        "function" :: fName :: rest ->
             let
                 ( argNames, rest1 ) =
                     readTil "=" rest
