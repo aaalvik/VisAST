@@ -1,6 +1,7 @@
 module Tokenizer exposing (tokenize)
 
 import Char
+import ListHelpers exposing (removeWs, span)
 
 
 tokenize : List Char -> List String
@@ -28,7 +29,7 @@ tokenize charList =
             "then" :: tokenize rest
 
         'e' :: 'l' :: 's' :: 'e' :: rest ->
-            tokenize rest
+            "else" :: tokenize rest
 
         '*' :: rest ->
             "*" :: tokenize rest
@@ -75,48 +76,3 @@ tokenize charList =
 
         [] ->
             []
-
-
-
--- HELPERS
-
-
-removeWs : List Char -> List Char
-removeWs list =
-    case list of
-        ' ' :: rest ->
-            removeWs rest
-
-        _ ->
-            list
-
-
-span : (Char -> Bool) -> List Char -> ( List Char, List Char )
-span p xs =
-    ( takeWhile p xs, dropWhile p xs )
-
-
-takeWhile : (Char -> Bool) -> List Char -> List Char
-takeWhile predicate list =
-    case list of
-        [] ->
-            []
-
-        x :: xs ->
-            if predicate x then
-                x :: takeWhile predicate xs
-            else
-                []
-
-
-dropWhile : (Char -> Bool) -> List Char -> List Char
-dropWhile predicate list =
-    case list of
-        [] ->
-            []
-
-        x :: xs ->
-            if predicate x then
-                dropWhile predicate xs
-            else
-                list

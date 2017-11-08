@@ -1,5 +1,6 @@
-module SimpleParser exposing (parse)
+module SimpleParser exposing (parse, readTil)
 
+import ListHelpers exposing (span)
 import ParserHelper exposing (..)
 import SimpleAST exposing (..)
 import Stack exposing (..)
@@ -46,7 +47,7 @@ parseExpr exprStack opStack strList =
         "if" :: "(" :: rest ->
             let
                 ( condStrs, rest1 ) =
-                    readTilClosingParens [] rest
+                    readTil ")" rest
 
                 condExpr =
                     parseExpr Stack.initialise Stack.initialise condStrs
@@ -60,17 +61,21 @@ parseExpr exprStack opStack strList =
         "set" :: fName :: "(" :: rest ->
             let
                 ( argNames, rest1 ) =
-                    readTilClosingParens [] rest
+                    readTil ")" rest
             in
             parseExpr exprStack (push (SetOp <| SetFun fName argNames) opStack) rest1
 
         "set" :: vName :: rest ->
             parseExpr exprStack (push (SetOp <| SetVar vName) opStack) rest
 
+        {- Lambda -}
+        "\\" :: lamVar :: "->" :: rest ->
+            ( exprStack, opStack )
+
         fName :: "(" :: rest ->
             let
                 ( argStrs, rest1 ) =
-                    readTilClosingParens [] rest
+                    readTil ")" rest
 
                 exprArgs =
                     List.map
@@ -98,17 +103,18 @@ parseExpr exprStack opStack strList =
             ( exprStack, opStack )
 
 
-readTilClosingParens : List String -> List String -> ( List String, List String )
-readTilClosingParens readSoFar list =
-    case list of
-        ")" :: rest ->
-            ( readSoFar, rest )
-
-        str :: rest ->
-            readTilClosingParens (readSoFar ++ [ str ]) rest
+readTil : String -> List String -> ( List String, List String )
+readTil stopAt l =
+    let
+        ( read, rest ) =
+            span (\x -> x /= stopAt) l
+    in
+    case rest of
+        x :: rest1 ->
+            ( read, rest1 )
 
         [] ->
-            ( readSoFar, [] )
+            ( read, [] )
 
 
 parseBinOp : ExprStack -> OpStack -> (Expr -> Expr -> Expr) -> PrecedenceType -> List String -> ( ExprStack, OpStack )
