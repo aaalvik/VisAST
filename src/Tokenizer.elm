@@ -46,18 +46,16 @@ tokenize charList =
         ',' :: rest ->
             tokenize rest
 
-        '\\' :: rest ->
-            let
-                ( lamVar, rest1 ) =
-                    span (\c -> Char.isLower c || Char.isUpper c) (removeWs rest)
-            in
-            case removeWs rest1 of
-                '-' :: '>' :: rest2 ->
-                    "\\" :: String.fromList lamVar :: "->" :: tokenize rest2
-
-                _ ->
-                    Debug.log ("ERROR: Lambda backslash without arrow: " ++ String.fromList rest1) []
-
+        -- '\\' :: rest ->
+        --     let
+        --         ( lamVar, rest1 ) =
+        --             span (\c -> Char.isLower c || Char.isUpper c) (removeWs rest)
+        --     in
+        --     case removeWs rest1 of
+        --         '-' :: '>' :: rest2 ->
+        --             "\\" :: String.fromList lamVar :: "->" :: tokenize rest2
+        --         _ ->
+        --             Debug.log ("ERROR: Lambda backslash without arrow: " ++ String.fromList rest1) []
         (c :: rest) as str ->
             if Char.isDigit c then
                 let

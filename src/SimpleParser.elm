@@ -44,19 +44,19 @@ parseExpr exprStack opStack strList =
         "<" :: rest ->
             parseBinOp exprStack opStack LessThan PLessThan rest
 
-        "if" :: "(" :: rest ->
+        "if" :: rest ->
             let
                 ( condStrs, rest1 ) =
-                    readTil ")" rest
+                    readTil "then" rest
+
+                ( thenStrs, rest2 ) =
+                    readTil "else" rest1
 
                 condExpr =
-                    parseExpr Stack.initialise Stack.initialise condStrs
+                    parseExpr exprStack opStack condStrs
                         |> uncurry buildAST
             in
-            parseExpr exprStack (push (IfOp <| If condExpr) opStack) rest1
-
-        "if" :: _ ->
-            Debug.log "Invalid syntax: Must have parenthes around if-condition!" ( exprStack, opStack )
+            parseExpr exprStack (push (IfOp <| If condExpr) opStack) (thenStrs ++ rest2)
 
         "set" :: fName :: "(" :: rest ->
             let
