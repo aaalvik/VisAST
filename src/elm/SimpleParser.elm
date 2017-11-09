@@ -74,12 +74,6 @@ parseExpr exprStack opStack strList =
             in
             parseExpr exprStack (push (SetOp <| SetFun fName argNames) opStack) rest1
 
-        -- "set" :: fName :: "(" :: rest ->
-        --     let
-        --         ( argNames, rest1 ) =
-        --             readTil ")" rest
-        --     in
-        --     parseExpr exprStack (push (SetOp <| SetFun fName argNames) opStack) rest1
         "set" :: vName :: rest ->
             parseExpr exprStack (push (SetOp <| SetVar vName) opStack) rest
 
