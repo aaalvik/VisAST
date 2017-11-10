@@ -21,6 +21,8 @@ parse str =
         exprs =
             str
                 |> String.split ";"
+                |> List.filter (not << String.isEmpty)
+                -- filter: remove last empty str if semicolon in the end
                 |> List.map (parseLine << tokenize << String.toList)
     in
     case exprs of

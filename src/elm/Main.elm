@@ -2,7 +2,8 @@ module Main exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (keyCode, on, onClick, onInput)
+import Json.Decode as Json
 import SimpleAST exposing (Expr(..))
 import SimpleParser exposing (parse)
 
@@ -14,6 +15,7 @@ type Msg
     = NoOp
     | UpdateString String
     | ParseString
+    | KeyDown Int
 
 
 type alias Model =
@@ -45,7 +47,7 @@ viewContent : Model -> Html Msg
 viewContent model =
     div [ class "content" ]
         [ div [ class "input-container" ]
-            [ input [ class "input", placeholder "Skriv inn uttrykk", onInput UpdateString ] []
+            [ textInput
             , button [ class "button btn", onClick ParseString ] [ text "Parse" ]
             ]
         , div [ class "result-container" ]
@@ -54,6 +56,17 @@ viewContent model =
                 |> text
             ]
         ]
+
+
+textInput : Html Msg
+textInput =
+    input
+        [ class "input"
+        , placeholder "Skriv inn uttrykk"
+        , onInput UpdateString
+        , onKeyDown KeyDown
+        ]
+        []
 
 
 update : Msg -> Model -> Model
@@ -72,12 +85,22 @@ update msg model =
             }
 
         ParseString ->
-            { model | ast = parseString model.textInput }
+            parseString model
+
+        KeyDown key ->
+            if key == 13 then
+                parseString model
+            else
+                model
 
 
-parseString : Maybe String -> Maybe Expr
-parseString textInput =
-    Maybe.map parse textInput
+parseString : Model -> Model
+parseString model =
+    let
+        newAST =
+            Maybe.map parse model.textInput
+    in
+    { model | ast = newAST }
 
 
 
@@ -93,3 +116,8 @@ astToString mAST =
 
         Nothing ->
             "..."
+
+
+onKeyDown : (Int -> Msg) -> Attribute Msg
+onKeyDown tagger =
+    on "keydown" (Json.map tagger keyCode)
