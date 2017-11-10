@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import SimpleAST exposing (Expr(..))
+import SimpleParser exposing (parse)
 
 
 --import SimpleEvaluator exposing (eval)
@@ -28,7 +29,7 @@ main =
 
 model : Model
 model =
-    { ast = Just (Add (Num 2) (Num 3))
+    { ast = Nothing --Just (Add (Num 2) (Num 3))
     , textInput = Nothing
     }
 
@@ -44,8 +45,8 @@ viewContent : Model -> Html Msg
 viewContent model =
     div [ class "content" ]
         [ div [ class "input-container" ]
-            [ input [ class "input", placeholder "  Skriv inn uttrykk", onInput UpdateString ] []
-            , button [ class "button btn" ] [ text "Parse" ]
+            [ input [ class "input", placeholder "Skriv inn uttrykk", onInput UpdateString ] []
+            , button [ class "button btn", onClick ParseString ] [ text "Parse" ]
             ]
         , div [ class "result-container" ]
             [ h3 [] [ text "Expr: " ]
@@ -62,10 +63,21 @@ update msg model =
             model
 
         UpdateString inp ->
-            { model | textInput = Just inp }
+            { model
+                | textInput =
+                    if String.isEmpty inp then
+                        Nothing
+                    else
+                        Just inp
+            }
 
         ParseString ->
-            model
+            { model | ast = parseString model.textInput }
+
+
+parseString : Maybe String -> Maybe Expr
+parseString textInput =
+    Maybe.map parse textInput
 
 
 
@@ -80,4 +92,4 @@ astToString mAST =
             toString ast
 
         Nothing ->
-            ""
+            "..."
