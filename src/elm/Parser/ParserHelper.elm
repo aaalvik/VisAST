@@ -1,4 +1,4 @@
-module ParserHelper exposing (..)
+module Parser.ParserHelper exposing (..)
 
 
 type PrecedenceType

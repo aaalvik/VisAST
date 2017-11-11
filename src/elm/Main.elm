@@ -4,11 +4,9 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (keyCode, on, onClick, onInput)
 import Json.Decode as Json
+import Parser.SimpleParser exposing (parse)
 import SimpleAST exposing (Expr(..))
-import SimpleParser exposing (parse)
-
-
---import SimpleEvaluator exposing (eval)
+import Visualizer.Node as Node
 
 
 type Msg
@@ -31,7 +29,7 @@ main =
 
 model : Model
 model =
-    { ast = Nothing --Just (Add (Num 2) (Num 3))
+    { ast = Nothing
     , textInput = Nothing
     }
 
@@ -39,7 +37,9 @@ model =
 view : Model -> Html Msg
 view model =
     div [ class "page" ]
-        [ viewContent model
+        [ -- viewContent model
+          --div [ class "nodes" ] [ Node.drawNode ]
+          Node.drawNode "ETLANGTORD" 200 300
         ]
 
 

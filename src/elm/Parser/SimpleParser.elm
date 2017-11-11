@@ -1,7 +1,7 @@
-module SimpleParser exposing (parse, readTil)
+module Parser.SimpleParser exposing (parse, readTil)
 
 import ListHelpers exposing (span)
-import ParserHelper exposing (..)
+import Parser.ParserHelper exposing (..)
 import SimpleAST exposing (..)
 import Stack exposing (..)
 import Tokenizer exposing (tokenize)

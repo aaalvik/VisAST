@@ -13,6 +13,14 @@ $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
     justify-content: center;
 }
 
+.nodes {
+    width: 500px;
+    height: 500px;
+    background-color: whitesmoke;
+    //display: flex;
+    //justify-content: center;
+}
+
 .content {
     padding: 2rem;
     display: flex;
@@ -29,6 +37,8 @@ $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
     justify-content: center; 
 }
 
+
+
 .result-container {
     display: flex;
     flex-direction: column;
@@ -42,6 +52,9 @@ $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
     border-radius: 4px;
     padding-left: 1rem;
 }
+.input:focus { outline: none; }
+.input:active { outline: none; }
+
 
 .button {
     color: white;
@@ -56,3 +69,15 @@ $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
     background-color: rgb(204, 14, 112);
     color: white;
 }
+
+// .node-circle {
+//     display: flex;
+//     justify-content: center;
+//     align-self: center;
+// }
+
+// .node-text {
+//     display: flex;
+//     justify-content: center; 
+//     align-self: center;
+// }
