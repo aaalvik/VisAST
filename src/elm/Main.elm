@@ -39,7 +39,7 @@ view model =
     div [ class "page" ]
         [ --viewContent model
           --, Node.drawNode "LessThan" 200 300
-          Node.drawTree (Num 4)
+          Node.drawTree (LessThan (Num 3) (Num 5))
         ]
 
 

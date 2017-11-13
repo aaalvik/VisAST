@@ -5,23 +5,11 @@ import Svg exposing (..)
 import Svg.Attributes exposing (..)
 
 
-wFACTOR =
-    11
-
-
-startX =
-    100
-
-
-startY =
-    100
-
-
-drawNode : String -> Int -> Int -> List (Svg msg)
-drawNode name x y =
+drawNode : Int -> Int -> String -> List (Svg msg)
+drawNode x y name =
     let
         wRect =
-            nodeWidth name + 20
+            nodeWidth name + 10
 
         hRect =
             30
@@ -48,24 +36,94 @@ drawText name xPos yPos =
 
 drawTree : Expr -> Svg msg
 drawTree tree =
-    drawNode "Num" startX startY
-        ++ drawNode "4" (startX - 25) (startY + 50)
-        ++ drawNode "3" (startX + 50) (startY + 50)
+    drawSubTree startX startY tree
         |> svg [ class "nodes" ]
 
 
+drawSubTree : Int -> Int -> Expr -> List (Svg msg)
+drawSubTree x y tree =
+    let
+        mid name =
+            x + (nodeWidth name // 2)
 
+        totalWidth =
+            treeWidth tree
+
+        newY =
+            nextY y
+
+        xLeft name numChildren =
+            mid name - (treeWidth tree // numChildren)
+    in
+    case tree of
+        (Num num) as n ->
+            drawNode x y (toString n)
+
+        (Var str) as v ->
+            drawNode x y (toString v)
+
+        Neg expr ->
+            drawNode x y "Neg"
+                ++ drawSubTree x newY expr
+
+        Add expr1 expr2 ->
+            drawNode x y "Add"
+                ++ drawSubTree (xLeft "Add" 2) newY expr1
+                ++ drawSubTree (xLeft "Add" 2 + treeWidth expr1 + 10) newY expr2
+
+        Mul expr1 expr2 ->
+            drawNode x y "Mul"
+                ++ drawSubTree (xLeft "Mul" 2) newY expr1
+                ++ drawSubTree (xLeft "Mul" 2 + treeWidth expr1 + 10) newY expr2
+
+        Sub expr1 expr2 ->
+            drawNode x y "Sub"
+                ++ drawSubTree (xLeft "Sub" 2) newY expr1
+                ++ drawSubTree (xLeft "Sub" 2 + treeWidth expr1 + 10) newY expr2
+
+        LessThan expr1 expr2 ->
+            drawNode x y "LessThan"
+                ++ drawSubTree (xLeft "LessThan" 2) newY expr1
+                ++ drawSubTree (xLeft "LessThan" 2 + treeWidth expr1 + 10) newY expr2
+
+        If boolExpr expr1 expr2 ->
+            drawNode x y "TODO"
+
+        SetVar var body ->
+            drawNode x y "TODO"
+
+        SetFun fName argNamesList body ->
+            drawNode x y "TODO"
+
+        Fun argNamesList body env ->
+            drawNode x y "TODO"
+
+        Apply fName argList ->
+            drawNode x y "TODO"
+
+        Seq exprList ->
+            drawNode x y "TODO"
+
+        Error str ->
+            drawNode x y "TODO"
+
+
+
+-- drawNode "Num" startX startY
+--     ++ drawNode "4" (startX - 25) (nextY startY)
+--     ++ drawNode "30" (startX + 50) (nextY startY)
+--     |> svg [ class "nodes" ]
 -- WIDTH HELPERS
 
 
 treeWidth : Expr -> Int
 treeWidth expr =
     case expr of
-        Num n ->
-            nodeWidth (toString n)
+        (Num num) as n ->
+            nodeWidth (toString n) + 10
 
-        Var str ->
-            nodeWidth str
+        (Var str) as s ->
+            nodeWidth (toString s) + 10
 
         Neg expr ->
             treeWidth expr
@@ -112,3 +170,27 @@ treeWidth expr =
 nodeWidth : String -> Int
 nodeWidth name =
     String.length name * wFACTOR
+
+
+wFACTOR =
+    9
+
+
+startX =
+    100
+
+
+startY =
+    100
+
+
+nextY y =
+    y + marginY
+
+
+marginY =
+    45
+
+
+marginX =
+    30
