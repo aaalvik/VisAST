@@ -37,9 +37,9 @@ model =
 view : Model -> Html Msg
 view model =
     div [ class "page" ]
-        [ -- viewContent model
-          --div [ class "nodes" ] [ Node.drawNode ]
-          Node.drawNode "ETLANGTORD" 200 300
+        [ --viewContent model
+          --, Node.drawNode "LessThan" 200 300
+          Node.drawTree (Num 4)
         ]
 
 
