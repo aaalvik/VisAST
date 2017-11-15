@@ -14,12 +14,13 @@ $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
     justify-content: center;
 }
 
-.nodes {
-    width: 1000px;
-    height: 1000px;
-    background-color: whitesmoke;
-    //display: flex;
-    //justify-content: center;
+.tree {
+    background-color: white;
+    display: flex;
+    justify-content: center;
+    border-radius: 10px;
+    margin-top: 2rem;
+    padding: 0;
 }
 
 .content {
@@ -27,8 +28,8 @@ $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
     display: flex;
     justify-content: flex-start;
     flex-direction: column;
-    height: 300px;
-    width: auto;
+    height: 500px;
+    width: 500px;
     background-color: $simple--light-pink;
     border-radius: 10px;
 }
@@ -38,14 +39,12 @@ $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
     justify-content: center; 
 }
 
-
-
 .result-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     margin-top: 3rem;
-    
+    height: auto;
 }
 
 .input {
@@ -70,15 +69,3 @@ $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
     background-color: $simple--pink;
     color: white;
 }
-
-// .node-circle {
-//     display: flex;
-//     justify-content: center;
-//     align-self: center;
-// }
-
-// .node-text {
-//     display: flex;
-//     justify-content: center; 
-//     align-self: center;
-// }

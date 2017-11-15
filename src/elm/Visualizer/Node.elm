@@ -38,10 +38,28 @@ drawText name xPos yPos =
     text_ [ alignmentBaseline "middle", textAnchor "middle", x (toString xPos), y (toString yPos) ] [ text name ]
 
 
-drawTree : Expr -> Svg msg
-drawTree tree =
-    drawSubTree startX startY tree
-        |> svg [ class "nodes" ]
+drawTree : Maybe Expr -> Svg msg
+drawTree mTree =
+    case mTree of
+        Nothing ->
+            drawText "..." 100 50
+
+        Just tree ->
+            let
+                w =
+                    maxTreeWidth tree
+
+                startX =
+                    w // 2
+
+                startY =
+                    50
+
+                viewBoxValues =
+                    "0 0 " ++ toString (w + 50) ++ " 300"
+            in
+            drawSubTree startX startY tree
+                |> svg [ class "tree", viewBox viewBoxValues ]
 
 
 drawSubTree : Int -> Int -> Expr -> List (Svg msg)
@@ -50,7 +68,6 @@ drawSubTree xMid y tree =
         totalWidth =
             maxTreeWidth tree
 
-        --treeWidth tree
         newY =
             nextY y
     in
@@ -199,16 +216,6 @@ marginBetween =
 wFACTOR : Int
 wFACTOR =
     9
-
-
-startX : Int
-startX =
-    300
-
-
-startY : Int
-startY =
-    100
 
 
 nextY : Int -> Int
