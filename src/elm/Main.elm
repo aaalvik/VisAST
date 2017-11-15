@@ -38,10 +38,8 @@ view : Model -> Html Msg
 view model =
     div [ class "page" ]
         [ --viewContent model
-          --Node.drawNode "Num 3" 200 300 []
-          Node.drawTree (Mul (Add (Num 4) (Num 4)) (Num 7))
-
-        --Node.drawTree (If (Add (Num 1) (Add (Num 2) (Num 9))) (Num 3) (Num 5))
+          --Node.drawTree (Mul (Add (Num 4) (Num 4)) (Add (Add (Num 7) (Num 9)) (Add (Num 444) (Num 7))))
+          Node.drawTree (If (Num 1) (Num 3) (Add (Num 6) (Num 7)))
         ]
 
 

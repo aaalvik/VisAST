@@ -48,8 +48,9 @@ drawSubTree : Int -> Int -> Expr -> List (Svg msg)
 drawSubTree xMid y tree =
     let
         totalWidth =
-            treeWidth tree
+            maxTreeWidth tree
 
+        --treeWidth tree
         newY =
             nextY y
     in
@@ -70,13 +71,27 @@ drawSubTree xMid y tree =
             in
             drawNode xMid y "Add" children
 
-        --drawBinOpNode "Add" expr1 expr2 xMid y newY
-        -- Mul expr1 expr2 ->
-        --     drawBinOpNode "Mul" expr1 expr2 xMid y newY
-        -- LessThan expr1 expr2 ->
-        --     drawBinOpNode "LessThan" expr1 expr2 xMid y newY
-        -- Sub expr1 expr2 ->
-        --     drawBinOpNode "Sub" expr1 expr2 xMid y newY
+        Mul expr1 expr2 ->
+            let
+                children =
+                    makeChildren "Mul" xMid y newY totalWidth [ expr1, expr2 ]
+            in
+            drawNode xMid y "Mul" children
+
+        Sub expr1 expr2 ->
+            let
+                children =
+                    makeChildren "Sub" xMid y newY totalWidth [ expr1, expr2 ]
+            in
+            drawNode xMid y "Sub" children
+
+        If bool eThen eElse ->
+            let
+                children =
+                    makeChildren "If" xMid y newY totalWidth [ bool, eThen, eElse ]
+            in
+            drawNode xMid y ("If: " ++ toString (totalWidth // 3)) children
+
         --If b e1 e2 ->
         --     let
         --         xLeft =
@@ -91,22 +106,6 @@ drawSubTree xMid y tree =
 
 
 
--- SetVar var body ->
---     drawNode x y "TODO" []
--- SetFun fName argNamesList body ->
---     drawNode x y "TODO" []
--- Fun argNamesList body env ->
---     drawNode x y "TODO" []
--- Apply fName argList ->
---     drawNode x y "TODO" []
--- Seq exprList ->
---     drawNode x y "TODO" []
--- Error str ->
---     drawNode x y "TODO" []
--- drawNode "Num" startX startY
---     ++ drawNode "4" (startX - 25) (nextY startY)
---     ++ drawNode "30" (startX + 50) (nextY startY)
---     |> svg [ class "nodes" ]
 -- WIDTH HELPERS
 
 
@@ -116,47 +115,40 @@ makeChildren name x y childY w childrenExprs =
         leftX =
             x - w // 2
 
-        childrenXs =
-            List.foldl
-                (\child ( nextX, xs ) ->
-                    ( nextX + treeWidth child // 2
-                    , if List.isEmpty xs then
-                        [ nextX ]
-                      else
-                        xs ++ [ nextX + treeWidth child ]
-                    )
-                )
-                ( leftX, [] )
-                childrenExprs
-                |> Tuple.second
+        numChildren =
+            List.length childrenExprs
 
+        diff =
+            w // (numChildren - 1)
+
+        xs =
+            Tuple.second <| List.foldl (\_ ( x, acc ) -> ( x + diff, acc ++ [ x + diff ] )) ( leftX, [ leftX ] ) (List.range 2 numChildren)
+
+        -- List.foldl
+        --     (\child ( nextX, xs ) ->
+        --         ( nextX + treeWidth child // 2 + 10
+        --         , if List.isEmpty xs then
+        --             [ nextX ]
+        --           else
+        --             xs ++ [ nextX + treeWidth child ]
+        --         )
+        --     )
+        --     ( leftX + 10, [] )
+        --     childrenExprs
+        --     |> Tuple.second
         children =
-            List.concat <| List.map2 (\child childX -> drawSubTree childX childY child) childrenExprs childrenXs
+            List.concat <| List.map2 (\child childX -> drawSubTree childX childY child) childrenExprs xs
     in
-    drawNode x y name children
+    children
 
 
-
--- drawBinOpNode name e1 e2 x y newY =
---     let
---         xLeft =
---             x - treeWidth e1
---         xRight =
---             x + treeWidth e2
---         children =
---             drawSubTree xLeft newY e1
---                 ++ drawSubTree xRight newY e2
---     in
---     drawNode x y name children
+maximum : (a -> Int) -> List a -> Int
+maximum widthFunction list =
+    List.foldl (\element acc -> Basics.max (widthFunction element) acc) 0 list
 
 
-maxWidth : List Expr -> Int
-maxWidth exprs =
-    List.foldl (\expr acc -> Basics.max (treeWidth expr) acc) 0 exprs
-
-
-treeWidth : Expr -> Int
-treeWidth expr =
+maxTreeWidth : Expr -> Int
+maxTreeWidth expr =
     case expr of
         (Num num) as n ->
             nodeWidth (toString n)
@@ -165,51 +157,38 @@ treeWidth expr =
             nodeWidth (toString s)
 
         Neg expr ->
-            treeWidth expr
+            maxTreeWidth expr
 
         Add expr1 expr2 ->
-            treeWidth expr1 + treeWidth expr2
+            2 * maximum maxTreeWidth [ expr1, expr2 ]
 
         Mul expr1 expr2 ->
-            treeWidth expr1 + treeWidth expr2
+            2 * maximum maxTreeWidth [ expr1, expr2 ]
 
         Sub expr1 expr2 ->
-            treeWidth expr1 + treeWidth expr2
+            2 * maximum maxTreeWidth [ expr1, expr2 ]
 
         LessThan expr1 expr2 ->
-            treeWidth expr1 + treeWidth expr2
+            2 * maximum maxTreeWidth [ expr1, expr2 ]
 
         If boolExpr expr1 expr2 ->
-            treeWidth boolExpr + treeWidth expr1 + treeWidth expr2 + 2
+            3 * maximum maxTreeWidth [ boolExpr, expr1, expr2 ]
 
         SetVar var body ->
-            nodeWidth var + treeWidth body
+            2 * Basics.max (nodeWidth var) (maxTreeWidth body)
 
         SetFun fName argNamesList body ->
-            nodeWidth fName
-                + List.foldl (\name acc -> acc + nodeWidth name) 0 argNamesList
-                + treeWidth body
+            3 * Basics.max (maximum nodeWidth <| fName :: argNamesList) (maxTreeWidth body)
 
-        -- + (List.length argNamesList + 2)
-        -- * marginX
         Fun argNamesList body env ->
-            List.foldl (\name acc -> acc + nodeWidth name) 0 argNamesList
-                + treeWidth body
-                + nodeWidth (toString env)
+            3 * Basics.max (maxTreeWidth body) (maximum nodeWidth <| toString env :: argNamesList)
 
-        -- + (List.length argNamesList + 2)
-        -- * marginX
         Apply fName argList ->
-            nodeWidth fName
-                + List.foldl (\arg acc -> acc + treeWidth arg) 0 argList
+            2 * Basics.max (nodeWidth fName) (maximum maxTreeWidth argList)
 
-        -- + (List.length argList + 1)
-        -- * marginX
         Seq exprList ->
-            List.foldl (\expr acc -> acc + treeWidth expr) 0 exprList
+            List.length exprList * maximum maxTreeWidth exprList
 
-        -- + List.length exprList
-        -- * marginX
         Error str ->
             nodeWidth str
 
