@@ -39,8 +39,14 @@ view model =
     div [ class "page" ]
         [ --viewContent model
           --Node.drawTree (Mul (Add (Num 4) (Num 4)) (Add (Add (Num 7) (Num 9)) (Add (Num 444) (Num 7))))
-          Node.drawTree (If (Num 1) (Num 3) (Add (Num 6) (Num 7)))
+          -- Node.drawTree ((Num 5)) (Num 3) (Add (Num 6) (Num 7)))
+          --Node.drawTree (SetVar "variabel" (Add (Num 20) (Num 9)))
+          Node.drawTree (If (Num 1) (Num 2) (Add (Num 1) (Num 4444)))
         ]
+
+
+seq =
+    Seq [ Num 4, Num 6, Num 7, Num 8 ]
 
 
 viewContent : Model -> Html Msg

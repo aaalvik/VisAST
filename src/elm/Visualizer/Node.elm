@@ -55,11 +55,11 @@ drawSubTree xMid y tree =
             nextY y
     in
     case tree of
-        (Num num) as n ->
-            drawNode xMid y (toString n) []
+        Num num ->
+            drawNode xMid y "Num" <| drawNode xMid newY (toString num) []
 
-        (Var str) as v ->
-            drawNode xMid y (toString v) []
+        Var str ->
+            drawNode xMid y "Var" (drawNode xMid newY (toString str) [])
 
         Neg expr ->
             drawNode xMid y "Neg" (drawSubTree xMid newY expr)
@@ -90,17 +90,22 @@ drawSubTree xMid y tree =
                 children =
                     makeChildren "If" xMid y newY totalWidth [ bool, eThen, eElse ]
             in
-            drawNode xMid y ("If: " ++ toString (totalWidth // 3)) children
+            drawNode xMid y "If" children
 
-        --If b e1 e2 ->
-        --     let
-        --         xLeft =
-        --             xFirst "If"
-        --     in
-        --     drawNode x y "If" []
-        --         ++ drawSubTree xLeft newY b
-        --         ++ drawSubTree (xLeft + treeWidth b + 10) newY e1
-        --         ++ drawSubTree (xLeft + treeWidth b + treeWidth e1 + 20) newY e2
+        SetVar varName body ->
+            let
+                leftX =
+                    xMid - totalWidth // 2
+
+                rightX =
+                    leftX + totalWidth
+
+                children =
+                    drawNode leftX newY (toString varName) []
+                        ++ drawSubTree rightX newY body
+            in
+            drawNode xMid y "SetVar" children
+
         _ ->
             drawNode xMid y "TODO" []
 
@@ -124,18 +129,6 @@ makeChildren name x y childY w childrenExprs =
         xs =
             Tuple.second <| List.foldl (\_ ( x, acc ) -> ( x + diff, acc ++ [ x + diff ] )) ( leftX, [ leftX ] ) (List.range 2 numChildren)
 
-        -- List.foldl
-        --     (\child ( nextX, xs ) ->
-        --         ( nextX + treeWidth child // 2 + 10
-        --         , if List.isEmpty xs then
-        --             [ nextX ]
-        --           else
-        --             xs ++ [ nextX + treeWidth child ]
-        --         )
-        --     )
-        --     ( leftX + 10, [] )
-        --     childrenExprs
-        --     |> Tuple.second
         children =
             List.concat <| List.map2 (\child childX -> drawSubTree childX childY child) childrenExprs xs
     in
@@ -150,11 +143,11 @@ maximum widthFunction list =
 maxTreeWidth : Expr -> Int
 maxTreeWidth expr =
     case expr of
-        (Num num) as n ->
-            nodeWidth (toString n)
+        Num num ->
+            maximum nodeWidth [ "Num", toString num ]
 
-        (Var str) as s ->
-            nodeWidth (toString s)
+        Var str ->
+            maximum nodeWidth [ "Var", str ]
 
         Neg expr ->
             maxTreeWidth expr
@@ -226,8 +219,3 @@ nextY y =
 marginY : Int
 marginY =
     45
-
-
-
--- marginX =
---     10
