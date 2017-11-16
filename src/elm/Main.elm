@@ -37,10 +37,7 @@ model =
 view : Model -> Html Msg
 view model =
     div [ class "page" ]
-        [ viewContent model
-
-        --Node.drawTree (If (Num 1) (Num 2) (Add (Num 1) (Num 4444)))
-        ]
+        [ viewContent model ]
 
 
 viewContent : Model -> Html Msg
