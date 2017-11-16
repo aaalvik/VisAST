@@ -42,17 +42,14 @@ drawTree mTree =
 
         Just tree ->
             let
-                w =
-                    maxTreeWidth tree
-
                 startX =
-                    w // 2
+                    500
 
                 startY =
                     50
 
                 viewBoxValues =
-                    "0 0 " ++ toString (w + 50) ++ " 300"
+                    "0 0 100% 100%"
             in
             drawSubTree startX startY tree
                 |> svg [ class "tree", viewBox viewBoxValues ]
@@ -205,4 +202,4 @@ nextY y =
 
 marginY : Int
 marginY =
-    45
+    50

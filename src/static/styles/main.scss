@@ -5,7 +5,7 @@ $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
 
 
 .page {
-    padding: 6rem;
+    padding: 2rem;
     width: 100%;
     width: 100vw;
     height: 100%;
@@ -14,53 +14,66 @@ $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
     justify-content: center;
 }
 
-.tree {
-    background-color: white;
-    display: flex;
-    justify-content: center;
-    border-radius: 10px;
-    margin-top: 2rem;
-    padding: 0;
-}
-
 .content {
     padding: 2rem;
     display: flex;
     justify-content: flex-start;
     flex-direction: column;
-    height: 500px;
-    width: 500px;
+    height: 100%;
+    width: 100%;
     background-color: $simple--light-pink;
     border-radius: 10px;
+}
+
+.tree-container {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    margin-top: 2rem;
+    overflow-x: scroll;
+    overflow-y: scroll;
+}
+
+.tree {
+    background-color: white;
+    display: flex;
+    justify-content: center;
+    padding: 0;
+    overflow-x: scroll;
+    position: relative;
+    width: 100%;
+    height: 100%
 }
 
 .input-container {
     display: flex; 
     justify-content: center; 
 }
+.input {
+    border: solid 1px white;
+    border-radius: 4px;
+    padding-left: 1rem;
+    height: 30px;
+    width: 50%;
+}
+.input:focus { outline: none; }
+.input:active { outline: none; }
+
 
 .result-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 3rem;
-    height: auto;
+    margin-top: 2rem;
+    height: 100%;
 }
-
-.input {
-    border: solid 1px white;
-    border-radius: 4px;
-    padding-left: 1rem;
-}
-.input:focus { outline: none; }
-.input:active { outline: none; }
-
 
 .button {
     color: white;
     margin-left: 0.5rem;
     background-color: $simple--pink;
     outline: none;
+    height: 30px;
 }
 
 .button:focus { outline: none; }

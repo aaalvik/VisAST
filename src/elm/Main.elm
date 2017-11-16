@@ -54,7 +54,8 @@ viewContent model =
             [ h3 [] [ text "Expr: " ]
             , astToString model.ast
                 |> text
-            , Node.drawTree model.ast
+            , [ Node.drawTree model.ast ]
+                |> div [ class "tree-container" ]
             ]
         ]
 
