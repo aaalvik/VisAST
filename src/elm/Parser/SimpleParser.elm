@@ -7,14 +7,6 @@ import Stack exposing (..)
 import Tokenizer exposing (tokenize)
 
 
-foo x =
-    let
-        y =
-            x + 1
-    in
-    y + 2
-
-
 parse : String -> Expr
 parse str =
     let
@@ -76,8 +68,11 @@ parseExpr exprStack opStack strList =
             in
             parseExpr exprStack (push (SetOp <| SetFun fName argNames) opStack) rest1
 
-        "set" :: vName :: rest ->
+        "set" :: vName :: "=" :: rest ->
             parseExpr exprStack (push (SetOp <| SetVar vName) opStack) rest
+
+        "set" :: _ ->
+            ( push (Error "syntax error for set-variable") exprStack, opStack )
 
         {- Lambda -}
         "\\" :: lamVar :: "->" :: rest ->
@@ -170,47 +165,52 @@ buildAST exprStack opStack =
         ( mThdLastExpr, exprStack3 ) =
             Stack.pop exprStack2
     in
-    case Stack.pop opStack of
-        ( Just (BinOp op), opStack1 ) ->
-            let
-                newExprStack =
-                    Stack.push (applyBinOp op mSndLastExpr mLastExpr) exprStack2
-            in
-            buildAST newExprStack opStack1
+    case mLastExpr of
+        Just (Error str) ->
+            Error <| "Parse error: " ++ str
 
-        ( Just (UnOp op), opStack1 ) ->
-            let
-                newExprStack =
-                    Stack.push (applyUnOp op mLastExpr) exprStack1
-            in
-            buildAST newExprStack opStack1
-
-        ( Just (IfOp op), opStack1 ) ->
-            let
-                newExprStack =
-                    Stack.push (applyBinOp op mSndLastExpr mLastExpr) exprStack2
-            in
-            buildAST newExprStack opStack1
-
-        ( Just (SetOp op), opStack1 ) ->
-            case mLastExpr of
-                Just lastExpr ->
+        _ ->
+            case Stack.pop opStack of
+                ( Just (BinOp op), opStack1 ) ->
                     let
                         newExprStack =
-                            Stack.push (op lastExpr) exprStack1
+                            Stack.push (applyBinOp op mSndLastExpr mLastExpr) exprStack2
                     in
                     buildAST newExprStack opStack1
 
-                Nothing ->
-                    Error "Expression stack is empty when trying to make a Set-node"
+                ( Just (UnOp op), opStack1 ) ->
+                    let
+                        newExprStack =
+                            Stack.push (applyUnOp op mLastExpr) exprStack1
+                    in
+                    buildAST newExprStack opStack1
 
-        ( Nothing, _ ) ->
-            case Stack.top exprStack of
-                Just expr ->
-                    expr
+                ( Just (IfOp op), opStack1 ) ->
+                    let
+                        newExprStack =
+                            Stack.push (applyBinOp op mSndLastExpr mLastExpr) exprStack2
+                    in
+                    buildAST newExprStack opStack1
 
-                Nothing ->
-                    Error "Expression stack was empty at the end, have nothing to return"
+                ( Just (SetOp op), opStack1 ) ->
+                    case mLastExpr of
+                        Just lastExpr ->
+                            let
+                                newExprStack =
+                                    Stack.push (op lastExpr) exprStack1
+                            in
+                            buildAST newExprStack opStack1
+
+                        Nothing ->
+                            Error "Expression stack is empty when trying to make a Set-node"
+
+                ( Nothing, _ ) ->
+                    case Stack.top exprStack of
+                        Just expr ->
+                            expr
+
+                        Nothing ->
+                            Error "Expression stack was empty at the end, have nothing to return"
 
 
 applyBinOp : (Expr -> Expr -> Expr) -> Maybe Expr -> Maybe Expr -> Expr

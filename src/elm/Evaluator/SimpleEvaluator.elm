@@ -11,12 +11,17 @@ eval str =
         expr =
             parse str
     in
-    case evalExpr Dict.empty expr of
-        ( _, Num num ) ->
-            num
+    case expr of
+        Error str ->
+            Debug.log ("Cannot evaluate - " ++ str) -1
 
-        ( _, a ) ->
-            Debug.log ("evaluated expression must return Int in the end, got this: " ++ toString a) -1
+        _ ->
+            case evalExpr Dict.empty expr of
+                ( _, Num num ) ->
+                    num
+
+                ( _, a ) ->
+                    Debug.log ("evaluated expression must return Int in the end, got this: " ++ toString a) -1
 
 
 evalExpr : Env -> Expr -> ( Env, Expr )

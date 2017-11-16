@@ -71,7 +71,7 @@ tokenize charList =
             else if Char.isLower c then
                 let
                     ( var, rest1 ) =
-                        span (\ch -> Char.isUpper ch || Char.isLower ch) str
+                        span isVariable str
                 in
                 String.fromList var :: tokenize rest1
             else
@@ -79,3 +79,8 @@ tokenize charList =
 
         [] ->
             []
+
+
+isVariable : Char -> Bool
+isVariable c =
+    Char.isLower c || Char.isUpper c || Char.isDigit c || c == '_' || c == '-'

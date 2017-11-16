@@ -105,7 +105,7 @@ drawSubTree xMid y tree =
         SetVar varName body ->
             let
                 children =
-                    drawNode leftX newY varName []
+                    drawNode leftX newY (toString varName) []
                         ++ drawSubTree rightX newY body
             in
             drawNode xMid y "SetVar" children
