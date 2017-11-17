@@ -61,7 +61,7 @@ textInput : Html Msg
 textInput =
     input
         [ class "input"
-        , placeholder "Skriv inn uttrykk"
+        , placeholder "Skriv inn et uttrykk"
         , onInput UpdateString
         , onKeyDown KeyDown
         ]

@@ -1,6 +1,5 @@
-module Parser.SimpleParser exposing (parse, readTil)
+module Parser.SimpleParser exposing (parse)
 
-import ListHelpers exposing (span)
 import Parser.ParserHelper exposing (..)
 import SimpleAST exposing (..)
 import Stack exposing (..)
@@ -41,10 +40,20 @@ parseExpr exprStack opStack strList =
             parseBinOp exprStack opStack Mul PMul rest
 
         "-" :: rest ->
-            Debug.log ("Exprstack: " ++ toString exprStack) parseBinOp exprStack opStack Sub PSub rest
+            parseBinOp exprStack opStack Sub PSub rest
 
         "<" :: rest ->
             parseBinOp exprStack opStack LessThan PLessThan rest
+
+        "(" :: rest ->
+            let
+                ( insideParens, rest1 ) =
+                    readTil ")" rest
+
+                parensExpr =
+                    parseLine insideParens
+            in
+            parseExpr (Stack.push parensExpr exprStack) opStack rest1
 
         "if" :: rest ->
             let
@@ -109,45 +118,32 @@ parseExpr exprStack opStack strList =
             ( exprStack, opStack )
 
 
-readTil : String -> List String -> ( List String, List String )
-readTil stopAt l =
-    let
-        ( read, rest ) =
-            span (\x -> x /= stopAt) l
-    in
-    case rest of
-        x :: rest1 ->
-            ( read, rest1 )
-
-        [] ->
-            ( read, [] )
-
-
 parseBinOp : ExprStack -> OpStack -> (Expr -> Expr -> Expr) -> PrecedenceType -> List String -> ( ExprStack, OpStack )
 parseBinOp exprStack opStack op pType rest =
     let
-        ( leftExpr, exprStack1 ) =
-            Stack.pop exprStack
-
         nextOpType =
             lookaheadOp rest
 
         ( exprStackRest, opStackRest ) =
             parseExpr Stack.initialise Stack.initialise rest
 
-        ( mBottom, exprStackRest1 ) =
+        ( mLastExpr, exprStack1 ) =
+            pop exprStack
+
+        ( mNextExpr, exprStackRest1 ) =
             popBottom exprStackRest
-
-        newExpr =
-            applyBinOp op leftExpr mBottom
-
-        mergedExprStack =
-            Stack.mergeStacks (Stack.push newExpr exprStack1) exprStackRest1
-
-        mergedOpStack =
-            Stack.mergeStacks opStack opStackRest
     in
-    if hasHigherPrecedence pType nextOpType then
+    if not (hasHigherPrecedence nextOpType pType) then
+        let
+            newExpr =
+                applyBinOp op mLastExpr mNextExpr
+
+            mergedExprStack =
+                Stack.mergeStacks (Stack.push newExpr exprStack1) exprStackRest1
+
+            mergedOpStack =
+                Stack.mergeStacks opStack opStackRest
+        in
         ( mergedExprStack, mergedOpStack )
     else
         parseExpr exprStack (Stack.push (BinOp op) opStack) rest
@@ -219,8 +215,8 @@ applyBinOp op mLeft mRight =
         ( Just left, Just right ) ->
             op left right
 
-        ( _, _ ) ->
-            Error <| "Binary operator " ++ toString op ++ " needs two arguments, but some were Nothing."
+        ( a, b ) ->
+            Error <| "Binary operator " ++ toString op ++ " needs two arguments, but got: (" ++ toString a ++ ", " ++ toString b
 
 
 applyUnOp : (Expr -> Expr) -> Maybe Expr -> Expr

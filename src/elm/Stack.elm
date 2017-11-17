@@ -62,7 +62,7 @@ pop (Stack stack) =
             ( Just head, Stack tail )
 
 
-popBottom : ExprStack -> ( Maybe Expr, ExprStack )
+popBottom : Stack a -> ( Maybe a, Stack a )
 popBottom stack =
     let
         stackList =

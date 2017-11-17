@@ -1,8 +1,8 @@
-module SimpleEvaluator exposing (eval)
+module Evaluator.SimpleEvaluator exposing (eval)
 
 import Dict
+import Parser.SimpleParser exposing (parse)
 import SimpleAST exposing (..)
-import SimpleParser exposing (parse)
 
 
 eval : String -> Int

@@ -1,14 +1,16 @@
 module Parser.ParserHelper exposing (..)
 
+import ListHelpers exposing (span)
+
 
 type PrecedenceType
-    = PParens
-    | PMul
+    = PMul
     | PAdd
     | PSub
     | PLessThan
     | PIf
     | PSet
+    | PFunction
     | PVar
     | PNum
     | PLast
@@ -22,11 +24,8 @@ type PrecedenceType
 lookaheadOp : List String -> PrecedenceType
 lookaheadOp list =
     case list of
-        "(" :: _ ->
-            PParens
-
-        ")" :: _ ->
-            PParens
+        "(" :: rest ->
+            lookaheadOp <| skipTil ")" rest
 
         "*" :: _ ->
             PMul
@@ -43,6 +42,9 @@ lookaheadOp list =
         "set" :: _ ->
             PSet
 
+        "function" :: _ ->
+            PFunction
+
         _ :: rest ->
             lookaheadOp rest
 
@@ -51,16 +53,16 @@ lookaheadOp list =
 
 
 hasHigherPrecedence : PrecedenceType -> PrecedenceType -> Bool
-hasHigherPrecedence p1 p2 =
-    precedenceNumber p1 <= precedenceNumber p2
+hasHigherPrecedence nextP curP =
+    precedenceNumber nextP
+        < precedenceNumber curP
+        || nextP
+        == PLast
 
 
 precedenceNumber : PrecedenceType -> Int
 precedenceNumber pType =
     case pType of
-        PParens ->
-            1
-
         --PNeg -> 2
         -- PApply -> 3 TODO Fix
         PMul ->
@@ -75,14 +77,24 @@ precedenceNumber pType =
         PLessThan ->
             4
 
-        PIf ->
-            5
-
-        PSet ->
-            6
-
-        PLast ->
-            1000
-
         _ ->
             6
+
+
+readTil : String -> List String -> ( List String, List String )
+readTil stopAt l =
+    let
+        ( read, rest ) =
+            span (\x -> x /= stopAt) l
+    in
+    case rest of
+        x :: rest1 ->
+            ( read, rest1 )
+
+        [] ->
+            ( read, [] )
+
+
+skipTil : String -> List String -> List String
+skipTil stopAt l =
+    Tuple.second <| readTil stopAt l
