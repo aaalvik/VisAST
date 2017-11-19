@@ -45,7 +45,7 @@ $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
     display: flex; 
     align-items: center; 
     flex-direction: column;
-    background-color: $light-green;
+    background-color: $lighter;
     padding: 2rem;
 }
 
@@ -68,15 +68,15 @@ $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
 .button {
     color: white;
     margin-left: 0.5rem;
-    background-color: $dark-green;
+    background-color: $light;
     outline: none;
     height: 30px;
     border-radius: 0;
 }
 
-.button:focus { outline: none; }
-.button:active { outline: none; }
+.button:focus { outline: none; color: white;}
+.button:active { outline: none; color: white; }
 .button:hover { 
-    background-color: $dark-green;
+    background-color: $dark;
     color: white;
 }
