@@ -1,4 +1,4 @@
-module Tokenizer exposing (tokenize)
+module Parser.Tokenizer exposing (tokenize)
 
 import Char
 import ListHelpers exposing (removeWs, span)

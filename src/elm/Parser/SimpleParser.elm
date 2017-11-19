@@ -1,9 +1,9 @@
 module Parser.SimpleParser exposing (parse)
 
 import Parser.ParserHelper exposing (..)
+import Parser.Tokenizer exposing (tokenize)
 import SimpleAST exposing (..)
 import Stack exposing (..)
-import Tokenizer exposing (tokenize)
 
 
 parse : String -> Expr

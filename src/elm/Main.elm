@@ -43,17 +43,19 @@ view model =
 viewContent : Model -> Html Msg
 viewContent model =
     div [ class "content" ]
-        [ div [ class "input-container" ]
-            [ textInput
-            , button [ class "button btn", onClick ParseString ] [ text "Parse" ]
+        [ div [ class "top-container" ]
+            [ [ textInput
+              , button [ class "button btn", onClick ParseString ] [ text "Parse" ]
+              ]
+                |> div [ class "input-container" ]
+            , h3 [ style [ ( "color", "white" ) ] ] [ text "Expr: " ]
+            , [ astToString model.ast
+                    |> text
+              ]
+                |> div [ style [ ( "color", "white" ) ] ]
             ]
-        , div [ class "result-container" ]
-            [ h3 [] [ text "Expr: " ]
-            , astToString model.ast
-                |> text
-            , [ Node.drawTree model.ast ]
-                |> div [ class "tree-container" ]
-            ]
+        , [ Node.drawTree model.ast ]
+            |> div [ class "tree-container" ]
         ]
 
 

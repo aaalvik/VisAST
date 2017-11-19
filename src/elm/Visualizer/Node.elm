@@ -37,12 +37,12 @@ drawNode x y name children =
 
 drawRectangle : Int -> Int -> Int -> Int -> Svg msg
 drawRectangle xPos yPos w h =
-    rect [ height (toString h), width (toString w), x (toString xPos), y (toString yPos), rx "15", ry "15", fill "pink" ] []
+    rect [ height (toString h), width (toString w), x (toString xPos), y (toString yPos), rx "15", ry "15", fill "#5BC8AC" ] []
 
 
 drawText : String -> Int -> Int -> Svg msg
 drawText name xPos yPos =
-    text_ [ alignmentBaseline "middle", textAnchor "middle", x (toString xPos), y (toString yPos) ] [ text name ]
+    text_ [ alignmentBaseline "middle", textAnchor "middle", x (toString xPos), y (toString yPos), fill "white" ] [ text name ]
 
 
 drawEdge : EdgePosition -> Svg msg
@@ -52,7 +52,7 @@ drawEdge ( ( parentX, parentY ), ( childX, childY ) ) =
         , y1 (toString <| parentY + 15)
         , x2 (toString childX)
         , y2 (toString <| childY + 15)
-        , Attrs.style "stroke:black;stroke-width:1"
+        , Attrs.style "stroke:#5BC8AC;stroke-width:1"
         ]
         []
 
