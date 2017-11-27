@@ -1,5 +1,6 @@
 module Main exposing (..)
 
+import Evaluator.SmallStepEvaluator exposing (eval)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (keyCode, on, onClick, onInput)
@@ -49,14 +50,35 @@ viewContent model =
               ]
                 |> div [ class "input-container" ]
             , h3 [ style [ ( "color", "white" ) ] ] [ text "Expr: " ]
-            , [ astToString model.ast
-                    |> text
-              ]
+            , [ viewEval model.ast ]
+                --, [ astToString model.ast |> text ]
                 |> div [ style [ ( "color", "white" ) ] ]
             ]
         , [ Node.drawTree model.ast ]
             |> div [ class "tree-container" ]
         ]
+
+
+viewEval : Maybe Expr -> Html Msg
+viewEval mAst =
+    case mAst of
+        Just ast ->
+            let
+                stateList =
+                    eval ast
+
+                firstElement =
+                    List.head stateList
+            in
+            case firstElement of
+                Just ( _, val ) ->
+                    text <| toString val
+
+                _ ->
+                    text ".."
+
+        Nothing ->
+            text "..."
 
 
 textInput : Html Msg

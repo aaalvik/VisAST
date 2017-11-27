@@ -2,7 +2,6 @@ module Evaluator.SmallStepEvaluator exposing (eval)
 
 import Dict
 import ListHelpers exposing (span)
-import Parser.SimpleParser exposing (parse)
 import SimpleAST exposing (..)
 
 
@@ -10,10 +9,13 @@ type alias State =
     ( Env, Expr )
 
 
-isNum : Expr -> Bool
-isNum expr =
+isVal : Expr -> Bool
+isVal expr =
     case expr of
         Num _ ->
+            True
+
+        Fun _ _ _ ->
             True
 
         _ ->
@@ -30,12 +32,9 @@ isTrue expr =
             False
 
 
-eval : String -> List State
-eval str =
+eval : Expr -> List State
+eval expr =
     let
-        expr =
-            parse str
-
         states =
             evalExpr Dict.empty expr [ ( Dict.empty, expr ) ]
     in
@@ -46,7 +45,8 @@ eval str =
         _ ->
             case List.head states of
                 Just ( _, Num num ) ->
-                    List.reverse states
+                    --List.reverse states
+                    states
 
                 Just ( _, a ) ->
                     Debug.log ("evaluated expression must return Int in the end, got this: " ++ toString a) []
@@ -65,8 +65,11 @@ evalExpr env expr prevStates =
         ( env, Num num ) ->
             nextStep :: prevStates
 
-        state ->
-            evalExpr env expr (state :: prevStates)
+        ( env, Error str ) ->
+            Debug.log ("Hit an error node: " ++ str) prevStates
+
+        ( newEnv, newExpr ) as state ->
+            evalExpr newEnv newExpr (state :: prevStates)
 
 
 stepOne : Env -> Expr -> State
@@ -161,7 +164,7 @@ stepOne env expr =
                         |> (,) env
 
                 Just (Fun argNames body localEnv) ->
-                    if List.all isNum args then
+                    if List.all isVal args then
                         let
                             namesAndVals =
                                 List.map2 (,) argNames args
@@ -219,7 +222,7 @@ evalArgsSmallStep : Env -> List Expr -> List Expr
 evalArgsSmallStep env args =
     let
         ( vals, rest ) =
-            span isNum args
+            span isVal args
     in
     case rest of
         expr :: rest1 ->
@@ -251,4 +254,5 @@ evalBinOp e1 e2 env op parentNode =
                 ( _, newLeftChild ) =
                     stepOne env leftChild
             in
-            parentNode newLeftChild rightChild
+            Debug.log ("Leftchild: " ++ toString newLeftChild ++ ", rightChild: " ++ toString rightChild) <|
+                parentNode newLeftChild rightChild
