@@ -249,10 +249,21 @@ evalBinOp e1 e2 env op parentNode =
             in
             parentNode leftChild newRightChild
 
-        ( leftChild, rightChild ) ->
+        ( Error err, _ ) ->
+            Error <| "BinOp: Left child was error: " ++ err
+
+        ( _, Error err ) ->
+            Error <| "BinOp: Right child was error: " ++ err
+
+        ( leftChild, _ ) ->
             let
                 ( _, newLeftChild ) =
                     stepOne env leftChild
             in
-            Debug.log ("Leftchild: " ++ toString newLeftChild ++ ", rightChild: " ++ toString rightChild) <|
-                parentNode newLeftChild rightChild
+            Debug.log ("Leftchild: " ++ toString newLeftChild ++ ", rightChild: " ++ toString e2) <|
+                case newLeftChild of
+                    Error err ->
+                        Error "New left child was error"
+
+                    _ ->
+                        parentNode newLeftChild e2
