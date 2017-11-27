@@ -105,13 +105,12 @@ drawSubTree xMid y tree =
             in
             edge :: (drawNode xMid y "Var" <| drawNode xMid newY (toString str) [])
 
-        Neg expr ->
-            let
-                edge =
-                    drawEdge ( ( xMid, y ), ( xMid, newY ) )
-            in
-            edge :: (drawNode xMid y "Neg" <| drawSubTree xMid newY expr)
-
+        -- Neg expr ->
+        --     let
+        --         edge =
+        --             drawEdge ( ( xMid, y ), ( xMid, newY ) )
+        --     in
+        --     edge :: (drawNode xMid y "Neg" <| drawSubTree xMid newY expr)
         Add expr1 expr2 ->
             drawBinOp xMid y newY totalWidth "Add" [ expr1, expr2 ]
 

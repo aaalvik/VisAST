@@ -1,4 +1,4 @@
-module Evaluator.SimpleEvaluator exposing (eval)
+module Evaluator.BigStepEvaluator exposing (eval)
 
 import Dict
 import Parser.SimpleParser exposing (parse)
@@ -39,21 +39,19 @@ evalExpr env expr =
                     Error ("Variable " ++ str ++ " not defined in env: " ++ toString env)
                         |> (,) env
 
-        Neg e ->
-            let
-                ( _, val ) =
-                    evalExpr env e
-            in
-            case val of
-                Num num ->
-                    -num
-                        |> Num
-                        |> (,) env
-
-                other ->
-                    (Error <| "Cannot negate something other than int: " ++ toString other)
-                        |> (,) env
-
+        -- Neg e ->
+        --     let
+        --         ( _, val ) =
+        --             evalExpr env e
+        --     in
+        --     case val of
+        --         Num num ->
+        --             -num
+        --                 |> Num
+        --                 |> (,) env
+        --         other ->
+        --             (Error <| "Cannot negate something other than int: " ++ toString other)
+        --                 |> (,) env
         Add e1 e2 ->
             evalBinOp e1 e2 env (+)
                 |> (,) env

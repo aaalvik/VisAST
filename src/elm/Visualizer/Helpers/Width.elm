@@ -12,9 +12,8 @@ maxTreeWidth expr =
         Var str ->
             maximum nodeWidth [ "Var", str ]
 
-        Neg expr ->
-            maxTreeWidth expr
-
+        -- Neg expr ->
+        --     maxTreeWidth expr
         Add expr1 expr2 ->
             2 * maximum maxTreeWidth [ expr1, expr2 ]
 

@@ -6,7 +6,7 @@ import Dict exposing (..)
 type Expr
     = Num Int
     | Var String
-    | Neg Expr
+      --| Neg Expr
     | Add Expr Expr
     | Mul Expr Expr
     | Sub Expr Expr
