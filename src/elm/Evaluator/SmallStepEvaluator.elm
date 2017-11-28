@@ -65,11 +65,14 @@ evalExpr env expr prevStates =
         ( env, Num num ) ->
             nextStep :: prevStates
 
+        ( env, Seq ((Error str) :: rest) ) ->
+            Debug.log ("Hit an error node inside Seq: " ++ str) prevStates
+
         ( env, Error str ) ->
             Debug.log ("Hit an error node: " ++ str) prevStates
 
         ( newEnv, newExpr ) as state ->
-            evalExpr newEnv newExpr (state :: prevStates)
+            Debug.log ("Stepping one more time, expr was: " ++ toString newExpr) evalExpr newEnv newExpr (state :: prevStates)
 
 
 stepOne : Env -> Expr -> State
@@ -189,6 +192,9 @@ stepOne env expr =
                 [ Num n ] ->
                     ( env, Num n )
 
+                [ Error str ] ->
+                    ( env, Error str )
+
                 [ expr ] ->
                     let
                         ( newEnv, nextExpr ) =
@@ -203,6 +209,9 @@ stepOne env expr =
                 -- throw away result, but keep env
                 (Fun _ _ _) :: notEmptyRest ->
                     stepOne env (Seq notEmptyRest)
+
+                (Error str) :: rest ->
+                    ( env, Error str )
 
                 expr :: notEmptyRest ->
                     let
