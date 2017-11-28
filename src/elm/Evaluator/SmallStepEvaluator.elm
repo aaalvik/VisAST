@@ -1,6 +1,7 @@
 module Evaluator.SmallStepEvaluator exposing (eval)
 
 import Dict
+import Evaluator.BigStepEvaluator as BigStep
 import ListHelpers exposing (span)
 import SimpleAST exposing (..)
 
@@ -72,7 +73,7 @@ evalExpr env expr prevStates =
             Debug.log ("Hit an error node: " ++ str) prevStates
 
         ( newEnv, newExpr ) as state ->
-            Debug.log ("Stepping one more time, expr was: " ++ toString newExpr) evalExpr newEnv newExpr (state :: prevStates)
+            evalExpr newEnv newExpr (state :: prevStates)
 
 
 stepOne : Env -> Expr -> State
@@ -82,8 +83,7 @@ stepOne env expr =
             ( env, expr )
 
         Fun argNames body localEnv ->
-            Fun argNames body localEnv
-                |> (,) env
+            ( env, expr )
 
         Var str ->
             case Dict.get str env of
@@ -96,15 +96,12 @@ stepOne env expr =
 
         Add e1 e2 ->
             evalBinOp e1 e2 env (+) Add
-                |> (,) env
 
         Mul e1 e2 ->
             evalBinOp e1 e2 env (*) Mul
-                |> (,) env
 
         Sub e1 e2 ->
             evalBinOp e1 e2 env (-) Sub
-                |> (,) env
 
         LessThan e1 e2 ->
             evalBinOp e1
@@ -117,7 +114,6 @@ stepOne env expr =
                         0
                 )
                 LessThan
-                |> (,) env
 
         If eBool eThen eElse ->
             case eBool of
@@ -174,8 +170,11 @@ stepOne env expr =
 
                             newLocalEnv =
                                 List.foldl (\( name, val ) newEnv -> Dict.insert name val newEnv) localEnv namesAndVals
+
+                            ( _, evaluatedBody ) =
+                                BigStep.evalExpr newLocalEnv body
                         in
-                        ( newLocalEnv, body )
+                        ( env, evaluatedBody )
                     else
                         let
                             nextArgVals =
@@ -204,11 +203,11 @@ stepOne env expr =
 
                 -- throw away result, but keep env
                 (Num n) :: notEmptyRest ->
-                    stepOne env (Seq notEmptyRest)
+                    Debug.log "Throwing away result of num, jumping to next expression in Seq" stepOne env (Seq notEmptyRest)
 
                 -- throw away result, but keep env
                 (Fun _ _ _) :: notEmptyRest ->
-                    stepOne env (Seq notEmptyRest)
+                    Debug.log "Throwing away result of fun, jumping to next expression in Seq" stepOne env (Seq notEmptyRest)
 
                 (Error str) :: rest ->
                     ( env, Error str )
@@ -245,34 +244,33 @@ evalArgsSmallStep env args =
             vals
 
 
-evalBinOp : Expr -> Expr -> Env -> (Int -> Int -> Int) -> (Expr -> Expr -> Expr) -> Expr
+evalBinOp : Expr -> Expr -> Env -> (Int -> Int -> Int) -> (Expr -> Expr -> Expr) -> State
 evalBinOp e1 e2 env op parentNode =
     case ( e1, e2 ) of
         ( Num num1, Num num2 ) ->
-            Num <| op num1 num2
+            ( env, Num <| op num1 num2 )
 
         ( (Num num) as leftChild, rightChild ) ->
             let
-                ( _, newRightChild ) =
+                ( newEnv, newRightChild ) =
                     stepOne env rightChild
             in
-            parentNode leftChild newRightChild
+            ( newEnv, parentNode leftChild newRightChild )
 
         ( Error err, _ ) ->
-            Error <| "BinOp: Left child was error: " ++ err
+            ( env, Error <| "BinOp: Left child was error: " ++ err )
 
         ( _, Error err ) ->
-            Error <| "BinOp: Right child was error: " ++ err
+            ( env, Error <| "BinOp: Right child was error: " ++ err )
 
         ( leftChild, _ ) ->
             let
-                ( _, newLeftChild ) =
+                ( newEnv, newLeftChild ) =
                     stepOne env leftChild
             in
-            Debug.log ("Leftchild: " ++ toString newLeftChild ++ ", rightChild: " ++ toString e2) <|
-                case newLeftChild of
-                    Error err ->
-                        Error "New left child was error"
+            case newLeftChild of
+                Error err ->
+                    ( newEnv, Error "New left child was error" )
 
-                    _ ->
-                        parentNode newLeftChild e2
+                _ ->
+                    ( newEnv, parentNode newLeftChild e2 )

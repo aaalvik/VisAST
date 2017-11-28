@@ -1,4 +1,4 @@
-module Evaluator.BigStepEvaluator exposing (eval)
+module Evaluator.BigStepEvaluator exposing (eval, evalExpr)
 
 import Dict
 import Parser.SimpleParser exposing (parse)
