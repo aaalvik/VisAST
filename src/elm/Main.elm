@@ -17,17 +17,17 @@ type Msg
     | UpdateString String
     | ParseString
     | KeyDown Int
-    | EvalOneStep
+    | NextState
+    | PreviousState
 
 
 type alias Model =
-    { --ast : Maybe Expr
-      evalStates : Maybe (List State)
-    , finalState : Maybe State
-    , currentAST : Maybe Expr
+    { currentAST : Maybe Expr
     , currentEnv : Maybe Env
+    , nextStates : Maybe (List State)
+    , previousStates : Maybe (List State)
+    , finalResult : Maybe Expr
     , textInput : Maybe String
-    , reachedFinalStep : Bool
     }
 
 
@@ -38,12 +38,12 @@ main =
 
 model : Model
 model =
-    { evalStates = Nothing
-    , finalState = Nothing
-    , currentAST = Nothing
+    { currentAST = Nothing
     , currentEnv = Nothing
+    , nextStates = Nothing
+    , previousStates = Nothing
+    , finalResult = Nothing
     , textInput = Nothing
-    , reachedFinalStep = True
     }
 
 
@@ -59,39 +59,26 @@ viewContent model =
         [ div [ class "top-container" ]
             [ [ textInput
               , button [ class "button btn", onClick ParseString ] [ text "Parse" ]
-              , button [ class "button btn", onClick EvalOneStep ] [ text "Next" ]
+              , button [ class "button btn", onClick PreviousState ] [ text "Previous" ]
+              , button [ class "button btn", onClick NextState ] [ text "Next" ]
               ]
                 |> div [ class "input-container" ]
-            , [ viewEval model.finalState ]
+            , [ viewEval model.finalResult ]
                 |> h3 [ style [ ( "color", "white" ) ] ]
-            , tempViewASTList model.evalStates
             ]
         , [ Node.drawTree model.currentAST ]
             |> div [ class "tree-container" ]
         ]
 
 
-tempViewASTList stateList =
-    case stateList of
-        Nothing ->
-            text "..."
-
-        Just list ->
-            let
-                asts =
-                    List.map Tuple.second list
-            in
-            text <| toString asts
-
-
-viewEval : Maybe State -> Html Msg
-viewEval mState =
+viewEval : Maybe Expr -> Html Msg
+viewEval mAst =
     let
         title =
             "Result of evaluation: "
     in
-    case mState of
-        Just ( _, ast ) ->
+    case mAst of
+        Just ast ->
             let
                 stateList =
                     eval ast
@@ -145,22 +132,61 @@ update msg model =
             else
                 model
 
-        EvalOneStep ->
-            -- TODO go to next state
+        NextState ->
             nextState model
+
+        PreviousState ->
+            previousState model
 
 
 nextState : Model -> Model
 nextState model =
-    case model.evalStates of
-        Nothing ->
+    case ( model.nextStates, model.currentEnv, model.currentAST ) of
+        ( Just ((( env, ast ) as state) :: rest), Just curEnv, Just curAst ) ->
+            let
+                currentState =
+                    ( curEnv, curAst )
+
+                newPrevStates =
+                    case model.previousStates of
+                        Nothing ->
+                            [ currentState ]
+
+                        Just xs ->
+                            currentState :: xs
+
+                newNextStates =
+                    rest
+            in
+            { model | currentAST = Just ast, currentEnv = Just env, nextStates = Just newNextStates, previousStates = Just newPrevStates }
+
+        _ ->
             model
 
-        Just [] ->
-            { model | reachedFinalStep = True }
 
-        Just (( env, ast ) :: rest) ->
-            { model | currentAST = Just ast, currentEnv = Just env, evalStates = Just rest }
+previousState : Model -> Model
+previousState model =
+    case ( model.previousStates, model.currentEnv, model.currentAST ) of
+        ( Just (( env, ast ) :: rest), Just curEnv, Just curAst ) ->
+            let
+                currentState =
+                    ( curEnv, curAst )
+
+                newNextStates =
+                    case model.nextStates of
+                        Nothing ->
+                            [ currentState ]
+
+                        Just xs ->
+                            currentState :: xs
+
+                newPreviousStates =
+                    rest
+            in
+            { model | currentAST = Just ast, currentEnv = Just env, nextStates = Just newNextStates, previousStates = Just newPreviousStates }
+
+        _ ->
+            model
 
 
 parseString : Model -> Model
@@ -183,7 +209,13 @@ parseString model =
                 statesReversed =
                     List.reverse states
             in
-            { model | currentAST = Just newAST, currentEnv = Just Dict.empty, evalStates = Just statesReversed, finalState = mFinalState }
+            { model
+                | currentAST = Just newAST
+                , currentEnv = Just Dict.empty
+                , nextStates = Just statesReversed
+                , previousStates = Just []
+                , finalResult = Maybe.map Tuple.second mFinalState
+            }
 
 
 

@@ -176,11 +176,11 @@ stepOne env expr =
 
                 -- throw away result, but keep env
                 (Num n) :: notEmptyRest ->
-                    Debug.log "Throwing away result of num, jumping to next expression in Seq" stepOne env (Seq notEmptyRest)
+                    Debug.log "Throwing away result of num, jumping to next expression in Seq" ( env, Seq notEmptyRest )
 
                 -- throw away result, but keep env
                 (Fun _ _ _) :: notEmptyRest ->
-                    Debug.log "Throwing away result of fun, jumping to next expression in Seq" stepOne env (Seq notEmptyRest)
+                    Debug.log "Throwing away result of fun, jumping to next expression in Seq" ( env, Seq notEmptyRest )
 
                 (Error str) :: rest ->
                     ( env, Error str )
