@@ -1,12 +1,14 @@
 module Main exposing (..)
 
+import Dict
+import Evaluator.Helpers exposing (State)
 import Evaluator.SmallStepEvaluator exposing (eval)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (keyCode, on, onClick, onInput)
 import Json.Decode as Json
 import Parser.SimpleParser exposing (parse)
-import SimpleAST exposing (Expr(..))
+import SimpleAST exposing (Env, Expr(..))
 import Visualizer.Node as Node
 
 
@@ -15,11 +17,17 @@ type Msg
     | UpdateString String
     | ParseString
     | KeyDown Int
+    | EvalOneStep
 
 
 type alias Model =
-    { ast : Maybe Expr
+    { --ast : Maybe Expr
+      evalStates : Maybe (List State)
+    , finalState : Maybe State
+    , currentAST : Maybe Expr
+    , currentEnv : Maybe Env
     , textInput : Maybe String
+    , reachedFinalStep : Bool
     }
 
 
@@ -30,8 +38,12 @@ main =
 
 model : Model
 model =
-    { ast = Nothing
+    { evalStates = Nothing
+    , finalState = Nothing
+    , currentAST = Nothing
+    , currentEnv = Nothing
     , textInput = Nothing
+    , reachedFinalStep = True
     }
 
 
@@ -47,22 +59,39 @@ viewContent model =
         [ div [ class "top-container" ]
             [ [ textInput
               , button [ class "button btn", onClick ParseString ] [ text "Parse" ]
+              , button [ class "button btn", onClick EvalOneStep ] [ text "Next" ]
               ]
                 |> div [ class "input-container" ]
-            , h3 [ style [ ( "color", "white" ) ] ] [ text "Expr: " ]
-            , [ viewEval model.ast ]
-                --, [ astToString model.ast |> text ]
-                |> div [ style [ ( "color", "white" ) ] ]
+            , [ viewEval model.finalState ]
+                |> h3 [ style [ ( "color", "white" ) ] ]
+            , tempViewASTList model.evalStates
             ]
-        , [ Node.drawTree model.ast ]
+        , [ Node.drawTree model.currentAST ]
             |> div [ class "tree-container" ]
         ]
 
 
-viewEval : Maybe Expr -> Html Msg
-viewEval mAst =
-    case mAst of
-        Just ast ->
+tempViewASTList stateList =
+    case stateList of
+        Nothing ->
+            text "..."
+
+        Just list ->
+            let
+                asts =
+                    List.map Tuple.second list
+            in
+            text <| toString asts
+
+
+viewEval : Maybe State -> Html Msg
+viewEval mState =
+    let
+        title =
+            "Result of evaluation: "
+    in
+    case mState of
+        Just ( _, ast ) ->
             let
                 stateList =
                     eval ast
@@ -72,13 +101,13 @@ viewEval mAst =
             in
             case firstElement of
                 Just ( _, val ) ->
-                    text <| toString val
+                    text <| title ++ toString val
 
                 _ ->
-                    text ".."
+                    text <| title ++ "..."
 
         Nothing ->
-            text "..."
+            text <| title ++ "..."
 
 
 textInput : Html Msg
@@ -116,18 +145,48 @@ update msg model =
             else
                 model
 
+        EvalOneStep ->
+            -- TODO go to next state
+            nextState model
+
+
+nextState : Model -> Model
+nextState model =
+    case model.evalStates of
+        Nothing ->
+            model
+
+        Just [] ->
+            { model | reachedFinalStep = True }
+
+        Just (( env, ast ) :: rest) ->
+            { model | currentAST = Just ast, currentEnv = Just env, evalStates = Just rest }
+
 
 parseString : Model -> Model
 parseString model =
-    let
-        newAST =
-            Maybe.map parse model.textInput
-    in
-    { model | ast = newAST }
+    case model.textInput of
+        Nothing ->
+            model
+
+        Just str ->
+            let
+                newAST =
+                    parse str
+
+                states =
+                    eval newAST
+
+                mFinalState =
+                    List.head states
+
+                statesReversed =
+                    List.reverse states
+            in
+            { model | currentAST = Just newAST, currentEnv = Just Dict.empty, evalStates = Just statesReversed, finalState = mFinalState }
 
 
 
---<| eval "function foo x y = x + y; foo (3,4);"
 -- HELPERS
 
 

@@ -2,42 +2,16 @@ module Evaluator.SmallStepEvaluator exposing (eval)
 
 import Dict
 import Evaluator.BigStepEvaluator as BigStep
+import Evaluator.Helpers as Helpers exposing (State)
 import ListHelpers exposing (span)
 import SimpleAST exposing (..)
-
-
-type alias State =
-    ( Env, Expr )
-
-
-isVal : Expr -> Bool
-isVal expr =
-    case expr of
-        Num _ ->
-            True
-
-        Fun _ _ _ ->
-            True
-
-        _ ->
-            False
-
-
-isTrue : Expr -> Bool
-isTrue expr =
-    case expr of
-        Num n ->
-            n /= 0
-
-        _ ->
-            False
 
 
 eval : Expr -> List State
 eval expr =
     let
         states =
-            evalExpr Dict.empty expr [ ( Dict.empty, expr ) ]
+            evalExpr Dict.empty expr []
     in
     case expr of
         Error str ->
@@ -46,7 +20,6 @@ eval expr =
         _ ->
             case List.head states of
                 Just ( _, Num num ) ->
-                    --List.reverse states
                     states
 
                 Just ( _, a ) ->
@@ -163,7 +136,7 @@ stepOne env expr =
                         |> (,) env
 
                 Just (Fun argNames body localEnv) ->
-                    if List.all isVal args then
+                    if List.all Helpers.isVal args then
                         let
                             namesAndVals =
                                 List.map2 (,) argNames args
@@ -230,7 +203,7 @@ evalArgsSmallStep : Env -> List Expr -> List Expr
 evalArgsSmallStep env args =
     let
         ( vals, rest ) =
-            span isVal args
+            span Helpers.isVal args
     in
     case rest of
         expr :: rest1 ->

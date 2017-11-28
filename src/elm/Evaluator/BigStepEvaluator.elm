@@ -1,6 +1,7 @@
 module Evaluator.BigStepEvaluator exposing (eval, evalExpr)
 
 import Dict
+import Evaluator.Helpers as Helpers exposing (State)
 import Parser.SimpleParser exposing (parse)
 import SimpleAST exposing (..)
 
@@ -24,7 +25,7 @@ eval str =
                     Debug.log ("evaluated expression must return Int in the end, got this: " ++ toString a) -1
 
 
-evalExpr : Env -> Expr -> ( Env, Expr )
+evalExpr : Env -> Expr -> State
 evalExpr env expr =
     case expr of
         Num num ->
@@ -39,19 +40,6 @@ evalExpr env expr =
                     Error ("Variable " ++ str ++ " not defined in env: " ++ toString env)
                         |> (,) env
 
-        -- Neg e ->
-        --     let
-        --         ( _, val ) =
-        --             evalExpr env e
-        --     in
-        --     case val of
-        --         Num num ->
-        --             -num
-        --                 |> Num
-        --                 |> (,) env
-        --         other ->
-        --             (Error <| "Cannot negate something other than int: " ++ toString other)
-        --                 |> (,) env
         Add e1 e2 ->
             evalBinOp e1 e2 env (+)
                 |> (,) env
@@ -89,14 +77,14 @@ evalExpr env expr =
             in
             case vBool of
                 Num bool ->
-                    if typeOf vThen /= typeOf vElse then
+                    if Helpers.typeOf vThen /= Helpers.typeOf vElse then
                         (Error <|
                             "Type of then and else branch in if must be the same: "
-                                ++ toString (typeOf vThen)
+                                ++ toString (Helpers.typeOf vThen)
                                 ++ " : "
                                 ++ toString vThen
                                 ++ ", "
-                                ++ toString (typeOf vElse)
+                                ++ toString (Helpers.typeOf vElse)
                                 ++ toString vElse
                         )
                             |> (,) env
@@ -110,7 +98,7 @@ evalExpr env expr =
                 other ->
                     (Error <|
                         "Type of condition in if must be Num, but was: "
-                            ++ toString (typeOf other)
+                            ++ toString (Helpers.typeOf other)
                             ++ " : "
                             ++ toString other
                     )
@@ -178,13 +166,3 @@ evalBinOp e1 e2 env op =
 
         ( ( _, other1 ), ( _, other2 ) ) ->
             Error <| "Both expressions in " ++ toString op ++ "-expression must be int: " ++ toString other1 ++ ", " ++ toString other2
-
-
-typeOf : Expr -> Type
-typeOf e =
-    case e of
-        Num _ ->
-            TNum
-
-        _ ->
-            TFun
