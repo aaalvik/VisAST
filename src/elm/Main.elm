@@ -91,10 +91,15 @@ viewEval mAst =
                     text <| title ++ toString val
 
                 _ ->
-                    text <| title ++ "..."
+                    text <| title ++ ""
 
         Nothing ->
-            text <| title ++ "..."
+            text <| title ++ ""
+
+
+
+-- showEnv : Env -> String
+-- showEnv env =
 
 
 textInput : Html Msg

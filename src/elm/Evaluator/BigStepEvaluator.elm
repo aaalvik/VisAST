@@ -53,16 +53,13 @@ evalExpr env expr =
                 |> (,) env
 
         LessThan e1 e2 ->
-            evalBinOp e1
-                e2
-                env
-                (\v1 v2 ->
-                    if v1 < v2 then
-                        1
-                    else
-                        0
-                )
-                |> (,) env
+            evalEquation e1 e2 (<) env
+
+        BiggerThan e1 e2 ->
+            evalEquation e1 e2 (>) env
+
+        Equal e1 e2 ->
+            evalEquation e1 e2 (==) env
 
         If eBool eThen eElse ->
             let
@@ -166,3 +163,17 @@ evalBinOp e1 e2 env op =
 
         ( ( _, other1 ), ( _, other2 ) ) ->
             Error <| "Both expressions in " ++ toString op ++ "-expression must be int: " ++ toString other1 ++ ", " ++ toString other2
+
+
+evalEquation : Expr -> Expr -> (Int -> Int -> Bool) -> Env -> State
+evalEquation e1 e2 op env =
+    evalBinOp e1
+        e2
+        env
+        (\v1 v2 ->
+            if op v1 v2 then
+                1
+            else
+                0
+        )
+        |> (,) env

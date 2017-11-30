@@ -16,9 +16,6 @@ tokenize charList =
         ')' :: rest ->
             ")" :: tokenize rest
 
-        '=' :: rest ->
-            "=" :: tokenize rest
-
         's' :: 'e' :: 't' :: ' ' :: rest ->
             "set" :: tokenize rest
 
@@ -45,6 +42,15 @@ tokenize charList =
 
         '<' :: rest ->
             "<" :: tokenize rest
+
+        '>' :: rest ->
+            ">" :: tokenize rest
+
+        '=' :: '=' :: rest ->
+            "==" :: tokenize rest
+
+        '=' :: rest ->
+            "=" :: tokenize rest
 
         ',' :: rest ->
             tokenize rest

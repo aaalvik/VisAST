@@ -40,10 +40,16 @@ parseExpr exprStack opStack strList =
             parseBinOp exprStack opStack Mul PMul rest
 
         "-" :: rest ->
-            parseBinOp exprStack opStack Sub PSub rest
+            parseBinOp exprStack opStack Sub PLast rest
 
         "<" :: rest ->
-            parseBinOp exprStack opStack LessThan PLessThan rest
+            parseBinOp exprStack opStack LessThan PLast rest
+
+        ">" :: rest ->
+            parseBinOp exprStack opStack BiggerThan PLast rest
+
+        "==" :: rest ->
+            parseBinOp exprStack opStack Equal PLast rest
 
         "(" :: rest ->
             let
@@ -69,13 +75,21 @@ parseExpr exprStack opStack strList =
             in
             parseExpr exprStack (push (IfOp <| If condExpr) opStack) (thenStrs ++ rest2)
 
-        {- function f a b c = something -}
-        "function" :: fName :: rest ->
+        {- function f (a, b, c) = something -}
+        "function" :: fName :: "(" :: rest ->
             let
                 ( argNames, rest1 ) =
-                    readTil "=" rest
+                    readTil ")" rest
             in
-            parseExpr exprStack (push (SetOp <| SetFun fName argNames) opStack) rest1
+            case rest1 of
+                "=" :: rest2 ->
+                    parseExpr exprStack (push (SetOp <| SetFun fName argNames) opStack) rest2
+
+                xs ->
+                    ( push (Error <| "function declaration must have '=' before body, was: " ++ toString xs) exprStack, opStack )
+
+        "function" :: _ ->
+            ( push (Error "syntax error for function declaration") exprStack, opStack )
 
         "set" :: vName :: "=" :: rest ->
             parseExpr exprStack (push (SetOp <| SetVar vName) opStack) rest

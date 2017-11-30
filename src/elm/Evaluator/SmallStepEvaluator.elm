@@ -77,16 +77,13 @@ stepOne env expr =
             evalBinOp e1 e2 env (-) Sub
 
         LessThan e1 e2 ->
-            evalBinOp e1
-                e2
-                env
-                (\v1 v2 ->
-                    if v1 < v2 then
-                        1
-                    else
-                        0
-                )
-                LessThan
+            evalEquation e1 e2 (<) env LessThan
+
+        BiggerThan e1 e2 ->
+            evalEquation e1 e2 (>) env BiggerThan
+
+        Equal e1 e2 ->
+            evalEquation e1 e2 (==) env Equal
 
         If eBool eThen eElse ->
             case eBool of
@@ -247,3 +244,16 @@ evalBinOp e1 e2 env op parentNode =
 
                 _ ->
                     ( newEnv, parentNode newLeftChild e2 )
+
+
+evalEquation e1 e2 op env node =
+    evalBinOp e1
+        e2
+        env
+        (\v1 v2 ->
+            if op v1 v2 then
+                1
+            else
+                0
+        )
+        node

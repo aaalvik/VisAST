@@ -11,6 +11,8 @@ type Expr
     | Mul Expr Expr
     | Sub Expr Expr
     | LessThan Expr Expr
+    | BiggerThan Expr Expr
+    | Equal Expr Expr
     | If Expr Expr Expr
     | SetVar String Expr -- set a = something
     | SetFun String ArgNames Expr -- set foo ( a, b, c ) = something

@@ -123,6 +123,12 @@ drawSubTree xMid y tree =
         LessThan expr1 expr2 ->
             drawBinOp xMid y newY totalWidth "LessThan" [ expr1, expr2 ]
 
+        BiggerThan expr1 expr2 ->
+            drawBinOp xMid y newY totalWidth "BiggerThan" [ expr1, expr2 ]
+
+        Equal expr1 expr2 ->
+            drawBinOp xMid y newY totalWidth "Equal" [ expr1, expr2 ]
+
         If bool eThen eElse ->
             let
                 edges =

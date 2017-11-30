@@ -26,6 +26,12 @@ maxTreeWidth expr =
         LessThan expr1 expr2 ->
             2 * maximum maxTreeWidth [ expr1, expr2 ]
 
+        BiggerThan expr1 expr2 ->
+            2 * maximum maxTreeWidth [ expr1, expr2 ]
+
+        Equal expr1 expr2 ->
+            2 * maximum maxTreeWidth [ expr1, expr2 ]
+
         If boolExpr expr1 expr2 ->
             3 * maximum maxTreeWidth [ boolExpr, expr1, expr2 ]
 
