@@ -3,7 +3,7 @@ module Visualizer.Node exposing (..)
 import SimpleAST exposing (Expr(..))
 import Svg exposing (..)
 import Svg.Attributes as Attrs exposing (..)
-import Visualizer.Helpers.Width exposing (maxTreeWidth, nodeWidth)
+import Visualizer.Helpers.Width exposing (marginBetween, maxTreeWidth, nodeWidth, treeWidth)
 
 
 type alias EdgePosition =
@@ -79,8 +79,9 @@ drawSubTree : Int -> Int -> Expr -> List (Svg msg)
 drawSubTree xMid y tree =
     let
         totalWidth =
-            maxTreeWidth tree
+            treeWidth tree
 
+        --maxTreeWidth tree
         newY =
             nextY y
 
@@ -135,7 +136,7 @@ drawSubTree xMid y tree =
                     drawEdges xMid y totalWidth 3
 
                 children =
-                    makeChildren xMid newY totalWidth drawSubTree [ bool, eThen, eElse ]
+                    makeChildren xMid newY totalWidth drawSubTree treeWidth [ bool, eThen, eElse ]
             in
             edges ++ drawNode xMid y "If" children
 
@@ -155,15 +156,18 @@ drawSubTree xMid y tree =
                 edges =
                     drawEdges xMid y totalWidth 3
 
+                wArg =
+                    (+) (marginBetween // 2) << nodeWidth
+
                 wArgs =
-                    List.length argNames * List.foldl (\arg acc -> Basics.max acc <| nodeWidth arg) 0 argNames
+                    List.sum <| List.map wArg argNames
 
                 argsEdges =
                     drawEdges xMid newY wArgs (List.length argNames)
 
                 args =
                     argsEdges
-                        ++ (drawNode xMid newY "ArgNames" <| makeChildren xMid (nextY newY) wArgs (\x y str -> drawNode x y (toString str) []) argNames)
+                        ++ (drawNode xMid newY "ArgNames" <| makeChildren xMid (nextY newY) wArgs (\x y str -> drawNode x y (toString str) []) nodeWidth argNames)
 
                 children =
                     drawNode leftX newY (toString fName) []
@@ -177,15 +181,18 @@ drawSubTree xMid y tree =
                 edges =
                     drawEdges xMid y totalWidth 3
 
+                wArg =
+                    (+) (marginBetween // 2) << nodeWidth
+
                 wArgs =
-                    List.length argNames * List.foldl (\arg acc -> Basics.max acc <| nodeWidth arg) 0 argNames
+                    List.sum <| List.map wArg argNames
 
                 argsEdges =
                     drawEdges leftX newY wArgs (List.length argNames)
 
                 args =
                     argsEdges
-                        ++ (drawNode leftX newY "ArgNames" <| makeChildren leftX (nextY newY) wArgs (\x y str -> drawNode x y (toString str) []) argNames)
+                        ++ (drawNode leftX newY "ArgNames" <| makeChildren leftX (nextY newY) wArgs (\x y str -> drawNode x y (toString str) []) nodeWidth argNames)
 
                 children =
                     args
@@ -200,14 +207,15 @@ drawSubTree xMid y tree =
                     drawEdges xMid y totalWidth 2
 
                 wArgs =
-                    List.length args * List.foldl (\arg acc -> Basics.max acc <| maxTreeWidth arg) 0 args
+                    List.sum <| List.map treeWidth args
 
+                --List.length args * List.foldl (\arg acc -> Basics.sum acc <| maxTreeWidth arg) 0 args
                 argsEdges =
                     drawEdges rightX newY wArgs (List.length args)
 
                 argsTree =
                     argsEdges
-                        ++ (drawNode rightX newY "Args" <| makeChildren rightX (nextY newY) wArgs drawSubTree args)
+                        ++ (drawNode rightX newY "Args" <| makeChildren rightX (nextY newY) wArgs drawSubTree treeWidth args)
 
                 children =
                     drawNode leftX newY (toString fName) []
@@ -217,14 +225,14 @@ drawSubTree xMid y tree =
 
         Seq exprList ->
             let
-                edges =
-                    drawEdges xMid y totalWidth (List.length exprList)
+                childrenWidths =
+                    List.map treeWidth exprList
 
-                wChildren =
-                    List.length exprList * List.foldl (\expr acc -> Basics.max acc <| maxTreeWidth expr) 0 exprList
+                edges =
+                    drawEdges2 xMid y totalWidth childrenWidths
 
                 children =
-                    makeChildren xMid newY wChildren drawSubTree exprList
+                    makeChildren xMid newY totalWidth drawSubTree treeWidth exprList
             in
             edges ++ drawNode xMid y "Seq" children
 
@@ -244,6 +252,18 @@ drawEdges parentX parentY w numChildren =
     List.map drawEdge edgePositions
 
 
+drawEdges2 : Int -> Int -> Int -> List Int -> List (Svg msg)
+drawEdges2 parentX parentY totalWidth childrenWidths =
+    let
+        childrenPos =
+            childrenPositions2 parentX parentY totalWidth childrenWidths
+
+        edgePositions =
+            List.map ((,) ( parentX, parentY )) childrenPos
+    in
+    List.map drawEdge edgePositions
+
+
 drawBinOp : Int -> Int -> Int -> Int -> String -> List Expr -> List (Svg msg)
 drawBinOp x y newY w name childrenList =
     let
@@ -251,9 +271,39 @@ drawBinOp x y newY w name childrenList =
             drawEdges x y w (List.length childrenList)
 
         children =
-            makeChildren x newY w drawSubTree childrenList
+            makeChildren x newY w drawSubTree treeWidth childrenList
     in
     edges ++ drawNode x y name children
+
+
+childrenPositions2 : Int -> Int -> Int -> List Int -> List Position
+childrenPositions2 parentX parentY w childrenWidths =
+    let
+        leftX =
+            parentX - w // 2
+
+        childY =
+            nextY parentY
+
+        xs =
+            childrenXs parentX w childrenWidths
+    in
+    List.map (\x -> ( x, childY )) xs
+
+
+childrenXs : Int -> Int -> List Int -> List Int
+childrenXs parentX w childrenWidths =
+    let
+        leftX =
+            parentX - w // 2
+
+        childrenWidthsWithMargin =
+            List.map ((+) (2 * marginBetween)) childrenWidths
+
+        childrenXs =
+            Tuple.second <| List.foldl (\w ( curX, acc ) -> ( curX + w, acc ++ [ curX + w // 2 ] )) ( leftX, [] ) childrenWidthsWithMargin
+    in
+    childrenXs
 
 
 childrenPositions : Int -> Int -> Int -> Int -> List Position
@@ -274,8 +324,8 @@ childrenPositions parentX parentY w numChildren =
     List.map (\x -> ( x, childY )) childrenXs
 
 
-makeChildren : Int -> Int -> Int -> (Int -> Int -> a -> List (Svg msg)) -> List a -> List (Svg msg)
-makeChildren x y w drawFunction childrenExprs =
+makeChildren : Int -> Int -> Int -> (Int -> Int -> a -> List (Svg msg)) -> (a -> Int) -> List a -> List (Svg msg)
+makeChildren x y w drawFunction widthFunction childrenExprs =
     let
         leftX =
             x - w // 2
@@ -286,9 +336,13 @@ makeChildren x y w drawFunction childrenExprs =
         diff =
             w // (numChildren - 1)
 
-        xs =
-            Tuple.second <| List.foldl (\_ ( x, acc ) -> ( x + diff, acc ++ [ x + diff ] )) ( leftX, [ leftX ] ) (List.range 2 numChildren)
+        childrenWidths =
+            List.map widthFunction childrenExprs
 
+        xs =
+            childrenXs x w childrenWidths
+
+        --Tuple.second <| List.foldl (\_ ( x, acc ) -> ( x + diff, acc ++ [ x + diff ] )) ( leftX, [ leftX ] ) (List.range 2 numChildren)
         children =
             List.concat <| List.map2 (\child curX -> drawFunction curX y child) childrenExprs xs
     in

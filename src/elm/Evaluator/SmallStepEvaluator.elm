@@ -246,6 +246,7 @@ evalBinOp e1 e2 env op parentNode =
                     ( newEnv, parentNode newLeftChild e2 )
 
 
+evalEquation : Expr -> Expr -> (Int -> Int -> Bool) -> Env -> (Expr -> Expr -> Expr) -> State
 evalEquation e1 e2 op env node =
     evalBinOp e1
         e2

@@ -75,7 +75,7 @@ viewEval : Maybe Expr -> Html Msg
 viewEval mAst =
     let
         title =
-            "Result of evaluation: "
+            "Final result of evaluation: "
     in
     case mAst of
         Just ast ->
