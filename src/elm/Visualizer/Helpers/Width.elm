@@ -143,9 +143,9 @@ maximum widthFunction list =
 
 marginBetween : Int
 marginBetween =
-    30
+    35
 
 
 wFACTOR : Int
 wFACTOR =
-    9
+    11

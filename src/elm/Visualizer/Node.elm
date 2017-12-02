@@ -151,10 +151,10 @@ drawSubTree xMid y tree =
                     treeWidth body
 
                 nameX =
-                    leftX + nameWidth // 2
+                    leftX + nameWidth // 2 - marginBetween // 2
 
                 bodyX =
-                    nameX + nameWidth // 2 + bodyWidth // 2
+                    nameX + nameWidth // 2 + bodyWidth // 2 + marginBetween
 
                 edges =
                     drawEdges xMid y totalWidth [ nameWidth, bodyWidth ]
@@ -170,8 +170,6 @@ drawSubTree xMid y tree =
                 wName =
                     nodeWidth fName
 
-                -- wArg =
-                --     (+) (marginBetween // 2) << nodeWidth
                 wArgs =
                     List.map nodeWidth argNames
 
@@ -182,7 +180,7 @@ drawSubTree xMid y tree =
                     treeWidth body
 
                 nameX =
-                    xMid - (totalWidth // 2) + (wName // 2)
+                    xMid - (totalWidth // 2) + (wName // 2) - marginBetween // 2
 
                 argsX =
                     nameX + wName // 2 + totalWidthArgs // 2 + marginBetween
@@ -225,7 +223,7 @@ drawSubTree xMid y tree =
                     nodeWidth (toString env)
 
                 argsX =
-                    xMid - (totalWidth // 2) + (totalWidthArgs // 2)
+                    xMid - (totalWidth // 2) + (totalWidthArgs // 2) - marginBetween // 2
 
                 bodyX =
                     argsX + (totalWidthArgs // 2) + (wBody // 2) + marginBetween
@@ -234,10 +232,10 @@ drawSubTree xMid y tree =
                     bodyX + wBody + wEnv // 2 + marginBetween
 
                 edges =
-                    drawEdgesGivenXs xMid y totalWidth [ argsX, bodyX, envX ]
+                    drawEdges xMid y totalWidth [ totalWidthArgs, wBody, wEnv ]
 
                 argsEdges =
-                    drawEdges argsX newY totalWidth wArgs
+                    drawEdges argsX newY totalWidthArgs wArgs
 
                 args =
                     argsEdges
@@ -259,16 +257,16 @@ drawSubTree xMid y tree =
                     List.sum argWidths
 
                 nameWidth =
-                    nodeWidth fName
+                    nodeWidth fName + 5
+
+                leftX =
+                    xMid - (totalWidth // 2) + nameWidth // 2 - marginBetween // 2
+
+                rightX =
+                    leftX + nameWidth // 2 + totalWidthArgs // 2 + marginBetween
 
                 edges =
                     drawEdges xMid y totalWidth [ nameWidth, totalWidthArgs ]
-
-                leftX =
-                    xMid - (totalWidth // 2) + nameWidth // 2
-
-                rightX =
-                    leftX + nameWidth + totalWidthArgs // 2
 
                 argsEdges =
                     drawEdges rightX newY totalWidthArgs argWidths
@@ -352,7 +350,13 @@ childrenXs parentX w childrenWidths =
             parentX - w // 2
 
         childrenXs =
-            Tuple.second <| List.foldl (\w ( curX, acc ) -> ( curX + w, acc ++ [ curX + w // 2 + marginBetween ] )) ( leftX - 2 * marginBetween, [] ) childrenWidths
+            Tuple.second <|
+                List.foldl
+                    (\w ( ( curX, prevW ), acc ) ->
+                        ( ( curX + w // 2 + prevW // 2 + marginBetween, w ), acc ++ [ curX + w // 2 + prevW // 2 + marginBetween ] )
+                    )
+                    ( ( leftX - marginBetween // 2, 0 ), [] )
+                    childrenWidths
     in
     childrenXs
 
