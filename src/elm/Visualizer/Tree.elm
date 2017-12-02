@@ -1,4 +1,4 @@
-module Visualizer.Node exposing (..)
+module Visualizer.Tree exposing (..)
 
 import SimpleAST exposing (Expr(..))
 import Svg exposing (..)
@@ -66,7 +66,7 @@ drawTree mTree =
         Just tree ->
             let
                 startX =
-                    500
+                    600
 
                 startY =
                     50

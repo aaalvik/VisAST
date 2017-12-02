@@ -9,7 +9,7 @@ import Html.Events exposing (keyCode, on, onClick, onInput)
 import Json.Decode as Json
 import Parser.SimpleParser exposing (parse)
 import SimpleAST exposing (Env, Expr(..))
-import Visualizer.Node as Node
+import Visualizer.Tree as Tree
 
 
 type Msg
@@ -66,16 +66,26 @@ viewContent model =
             , [ viewEval model.finalResult ]
                 |> h3 [ style [ ( "color", "white" ) ] ]
             ]
-        , [ Node.drawTree model.currentAST ]
-            |> div [ class "tree-container" ]
+        , viewAST model
         ]
+
+
+viewAST : Model -> Html Msg
+viewAST model =
+    [ viewEnv model.currentEnv
+        |> div [ class "env" ]
+    , [ Tree.drawTree model.currentAST ]
+        |> div [ class "tree-container" ]
+    ]
+        |> div
+            [ class "ast-container" ]
 
 
 viewEval : Maybe Expr -> Html Msg
 viewEval mAst =
     let
         title =
-            "Final result of evaluation: "
+            "Final result of \n evaluation: "
     in
     case mAst of
         Just ast ->
@@ -97,9 +107,31 @@ viewEval mAst =
             text <| title ++ ""
 
 
+viewEnv : Maybe Env -> List (Html Msg)
+viewEnv mEnv =
+    case mEnv of
+        Nothing ->
+            []
 
--- showEnv : Env -> String
--- showEnv env =
+        Just env ->
+            div [] [ h4 [] [ text "Environment:" ] ] :: List.map (div [] << List.singleton << text) (showEnv env)
+
+
+showEnv : Env -> List String
+showEnv env =
+    let
+        envList =
+            List.reverse <| Dict.toList env
+
+        stringList =
+            List.map (uncurry showEnvElement) envList
+    in
+    stringList
+
+
+showEnvElement : String -> Expr -> String
+showEnvElement name body =
+    name ++ " : " ++ toString body
 
 
 textInput : Html Msg
