@@ -3,7 +3,7 @@ module Visualizer.Node exposing (..)
 import SimpleAST exposing (Expr(..))
 import Svg exposing (..)
 import Svg.Attributes as Attrs exposing (..)
-import Visualizer.Helpers.Width exposing (marginBetween, maxTreeWidth, nodeWidth, treeWidth)
+import Visualizer.Helpers.Width exposing (marginBetween, nodeWidth, treeWidth)
 
 
 type alias EdgePosition =
@@ -208,7 +208,7 @@ drawSubTree xMid y tree =
         Fun argNames body env ->
             let
                 wArg =
-                    \name -> nodeWidth (toString name)
+                    nodeWidth << toString
 
                 wArgs =
                     List.map wArg argNames
@@ -282,17 +282,22 @@ drawSubTree xMid y tree =
             edges ++ drawNode xMid y "Apply" children
 
         Seq exprList ->
-            let
-                childrenWidths =
-                    List.map treeWidth exprList
+            case exprList of
+                [ expr ] ->
+                    drawSubTree xMid y expr
 
-                edges =
-                    drawEdges xMid y totalWidth childrenWidths
+                _ ->
+                    let
+                        childrenWidths =
+                            List.map treeWidth exprList
 
-                children =
-                    makeChildren xMid newY totalWidth drawSubTree treeWidth exprList
-            in
-            edges ++ drawNode xMid y "Seq" children
+                        edges =
+                            drawEdges xMid y totalWidth childrenWidths
+
+                        children =
+                            makeChildren xMid newY totalWidth drawSubTree treeWidth exprList
+                    in
+                    edges ++ drawNode xMid y "Seq" children
 
         Error str ->
             drawNode xMid y ("ERROR: " ++ str) []
