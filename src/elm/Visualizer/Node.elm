@@ -208,7 +208,7 @@ drawSubTree xMid y tree =
         Fun argNames body env ->
             let
                 wArg =
-                    (+) (marginBetween // 2) << nodeWidth
+                    \name -> nodeWidth (toString name)
 
                 wArgs =
                     List.map wArg argNames
@@ -220,16 +220,16 @@ drawSubTree xMid y tree =
                     treeWidth body
 
                 wEnv =
-                    nodeWidth (toString env)
+                    nodeWidth "Env.."
 
                 argsX =
-                    xMid - (totalWidth // 2) + (totalWidthArgs // 2) - marginBetween // 2
+                    xMid - totalWidth // 2 + totalWidthArgs // 2
 
                 bodyX =
-                    argsX + (totalWidthArgs // 2) + (wBody // 2) + marginBetween
+                    argsX + totalWidthArgs // 2 + wBody // 2 + marginBetween
 
                 envX =
-                    bodyX + wBody + wEnv // 2 + marginBetween
+                    bodyX + wBody // 2 + wEnv // 2 + marginBetween
 
                 edges =
                     drawEdges xMid y totalWidth [ totalWidthArgs, wBody, wEnv ]
@@ -239,12 +239,12 @@ drawSubTree xMid y tree =
 
                 args =
                     argsEdges
-                        ++ (drawNode argsX newY "ArgNames" <| makeChildren argsX (nextY newY) totalWidthArgs (\x y str -> drawNode x y (toString str) []) nodeWidth argNames)
+                        ++ (drawNode argsX newY "ArgNames" <| makeChildren argsX (nextY newY) totalWidthArgs (\x y str -> drawNode x y (toString str) []) wArg argNames)
 
                 children =
                     args
                         ++ drawSubTree bodyX newY body
-                        ++ drawNode envX newY (toString env) []
+                        ++ drawNode envX newY "Env.." []
             in
             edges ++ drawNode xMid y "Fun" children
 
@@ -257,10 +257,10 @@ drawSubTree xMid y tree =
                     List.sum argWidths
 
                 nameWidth =
-                    nodeWidth fName + 5
+                    nodeWidth fName
 
                 leftX =
-                    xMid - (totalWidth // 2) + nameWidth // 2 - marginBetween // 2
+                    xMid - totalWidth // 2 + nameWidth // 2
 
                 rightX =
                     leftX + nameWidth // 2 + totalWidthArgs // 2 + marginBetween
@@ -344,18 +344,26 @@ drawBinOp x y newY w name childrenList =
 
 
 childrenXs : Int -> Int -> List Int -> List Int
-childrenXs parentX w childrenWidths =
+childrenXs parentX totalW childrenWidths =
     let
         leftX =
-            parentX - w // 2
+            parentX - totalW // 2
+
+        marginIfNotFirst prevW =
+            if prevW == 0 then
+                0
+            else
+                marginBetween
 
         childrenXs =
             Tuple.second <|
                 List.foldl
                     (\w ( ( curX, prevW ), acc ) ->
-                        ( ( curX + w // 2 + prevW // 2 + marginBetween, w ), acc ++ [ curX + w // 2 + prevW // 2 + marginBetween ] )
+                        ( ( curX + w // 2 + prevW // 2 + marginIfNotFirst prevW, w )
+                        , acc ++ [ curX + w // 2 + prevW // 2 + marginIfNotFirst prevW ]
+                        )
                     )
-                    ( ( leftX - marginBetween // 2, 0 ), [] )
+                    ( ( leftX, 0 ), [] )
                     childrenWidths
     in
     childrenXs
