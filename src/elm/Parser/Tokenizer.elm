@@ -53,7 +53,7 @@ tokenize charList =
             "=" :: tokenize rest
 
         ',' :: rest ->
-            tokenize rest
+            "," :: tokenize rest
 
         '\\' :: rest ->
             let

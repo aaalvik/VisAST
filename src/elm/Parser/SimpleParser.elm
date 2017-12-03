@@ -80,10 +80,13 @@ parseExpr exprStack opStack strList =
             let
                 ( argNames, rest1 ) =
                     readTil ")" rest
+
+                argNamesSplitOnComma =
+                    List.concat <| splitOnComma argNames
             in
             case rest1 of
                 "=" :: rest2 ->
-                    parseExpr exprStack (push (SetOp <| SetFun fName argNames) opStack) rest2
+                    parseExpr exprStack (push (SetOp <| SetFun fName argNamesSplitOnComma) opStack) rest2
 
                 xs ->
                     ( push (Error <| "function declaration must have '=' before body, was: " ++ toString xs) exprStack, opStack )
@@ -106,17 +109,22 @@ parseExpr exprStack opStack strList =
                 ( argStrs, rest1 ) =
                     readTil ")" rest
 
-                exprArgs =
-                    List.map
-                        (\argStr ->
-                            case String.toInt argStr of
-                                Ok num ->
-                                    Num num
+                argsSplitOnComma =
+                    splitOnComma argStrs
 
-                                Err _ ->
-                                    Var argStr
-                        )
-                        argStrs
+                exprArgs =
+                    List.map (parse << String.join " ") argsSplitOnComma
+
+                -- exprArgs =
+                --     List.map
+                --         (\argStr ->
+                --             case String.toInt argStr of
+                --                 Ok num ->
+                --                     Num num
+                --                 Err _ ->
+                --                     Var argStr
+                --         )
+                --         argStrs
             in
             parseExpr (push (Apply fName exprArgs) exprStack) opStack rest1
 
@@ -130,6 +138,20 @@ parseExpr exprStack opStack strList =
 
         [] ->
             ( exprStack, opStack )
+
+
+splitOnComma : List String -> List (List String)
+splitOnComma strs =
+    let
+        ( arg, rest ) =
+            readTil "," strs
+    in
+    case rest of
+        [] ->
+            [ arg ]
+
+        xs ->
+            arg :: splitOnComma rest
 
 
 parseBinOp : ExprStack -> OpStack -> (Expr -> Expr -> Expr) -> PrecedenceType -> List String -> ( ExprStack, OpStack )
