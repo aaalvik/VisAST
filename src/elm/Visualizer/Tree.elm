@@ -66,7 +66,7 @@ drawTree mTree =
         Just tree ->
             let
                 startX =
-                    600
+                    500
 
                 startY =
                     50
