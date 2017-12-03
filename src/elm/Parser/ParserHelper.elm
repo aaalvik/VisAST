@@ -6,13 +6,13 @@ import ListHelpers exposing (span)
 type PrecedenceType
     = PMul
     | PAdd
-    | PSub
-    | PLessThan
-    | PIf
-    | PSet
-    | PFunction
-    | PVar
-    | PNum
+      -- | PLessThan
+      -- | PEqual
+      -- | PIf
+      -- | PSet
+      -- | PFunction
+      -- | PVar
+      -- | PNum
     | PLast
 
 
@@ -33,18 +33,14 @@ lookaheadOp list =
         "+" :: _ ->
             PAdd
 
-        "-" :: _ ->
-            PSub
-
-        "if" :: _ ->
-            PIf
-
-        "set" :: _ ->
-            PSet
-
-        "function" :: _ ->
-            PFunction
-
+        -- "-" :: _ ->
+        --     PSub
+        -- "if" :: _ ->
+        --     PIf
+        -- "set" :: _ ->
+        --     PSet
+        -- "function" :: _ ->
+        --     PFunction
         _ :: rest ->
             lookaheadOp rest
 
@@ -63,22 +59,14 @@ hasHigherPrecedence nextP curP =
 precedenceNumber : PrecedenceType -> Int
 precedenceNumber pType =
     case pType of
-        --PNeg -> 2
-        -- PApply -> 3 TODO Fix
         PMul ->
-            2
+            1
 
         PAdd ->
-            3
-
-        PSub ->
-            3
-
-        PLessThan ->
-            4
+            2
 
         _ ->
-            6
+            100
 
 
 readTil : String -> List String -> ( List String, List String )

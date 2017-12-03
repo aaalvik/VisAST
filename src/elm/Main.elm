@@ -1,12 +1,15 @@
 module Main exposing (..)
 
+import Dict
+import Evaluator.Helpers exposing (State)
+import Evaluator.SmallStepEvaluator exposing (eval)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (keyCode, on, onClick, onInput)
 import Json.Decode as Json
 import Parser.SimpleParser exposing (parse)
-import SimpleAST exposing (Expr(..))
-import Visualizer.Node as Node
+import SimpleAST exposing (Env, Expr(..))
+import Visualizer.Tree as Tree
 
 
 type Msg
@@ -14,10 +17,16 @@ type Msg
     | UpdateString String
     | ParseString
     | KeyDown Int
+    | NextState
+    | PreviousState
 
 
 type alias Model =
-    { ast : Maybe Expr
+    { currentAST : Maybe Expr
+    , currentEnv : Maybe Env
+    , nextStates : Maybe (List State)
+    , previousStates : Maybe (List State)
+    , finalResult : Maybe Expr
     , textInput : Maybe String
     }
 
@@ -29,7 +38,11 @@ main =
 
 model : Model
 model =
-    { ast = Nothing
+    { currentAST = Nothing
+    , currentEnv = Nothing
+    , nextStates = Nothing
+    , previousStates = Nothing
+    , finalResult = Nothing
     , textInput = Nothing
     }
 
@@ -46,17 +59,79 @@ viewContent model =
         [ div [ class "top-container" ]
             [ [ textInput
               , button [ class "button btn", onClick ParseString ] [ text "Parse" ]
+              , button [ class "button btn", onClick PreviousState ] [ text "Previous" ]
+              , button [ class "button btn", onClick NextState ] [ text "Next" ]
               ]
                 |> div [ class "input-container" ]
-            , h3 [ style [ ( "color", "white" ) ] ] [ text "Expr: " ]
-            , [ astToString model.ast
-                    |> text
-              ]
-                |> div [ style [ ( "color", "white" ) ] ]
+            , [ viewEval model.finalResult ]
+                |> h3 [ style [ ( "color", "white" ) ] ]
             ]
-        , [ Node.drawTree model.ast ]
-            |> div [ class "tree-container" ]
+        , viewAST model
         ]
+
+
+viewAST : Model -> Html Msg
+viewAST model =
+    [ viewEnv model.currentEnv
+        |> div [ class "env" ]
+    , [ Tree.drawTree model.currentAST ]
+        |> div [ class "tree-container" ]
+    ]
+        |> div
+            [ class "ast-container" ]
+
+
+viewEval : Maybe Expr -> Html Msg
+viewEval mAst =
+    let
+        title =
+            "Final result of \n evaluation: "
+    in
+    case mAst of
+        Just ast ->
+            let
+                stateList =
+                    eval ast
+
+                firstElement =
+                    List.head stateList
+            in
+            case firstElement of
+                Just ( _, val ) ->
+                    text <| title ++ toString val
+
+                _ ->
+                    text <| title ++ ""
+
+        Nothing ->
+            text <| title ++ ""
+
+
+viewEnv : Maybe Env -> List (Html Msg)
+viewEnv mEnv =
+    case mEnv of
+        Nothing ->
+            []
+
+        Just env ->
+            div [] [ h4 [] [ text "Environment:" ] ] :: List.map (div [] << List.singleton << text) (showEnv env)
+
+
+showEnv : Env -> List String
+showEnv env =
+    let
+        envList =
+            List.reverse <| Dict.toList env
+
+        stringList =
+            List.map (uncurry showEnvElement) envList
+    in
+    stringList
+
+
+showEnvElement : String -> Expr -> String
+showEnvElement name body =
+    name ++ " : " ++ toString body
 
 
 textInput : Html Msg
@@ -94,18 +169,93 @@ update msg model =
             else
                 model
 
+        NextState ->
+            nextState model
+
+        PreviousState ->
+            previousState model
+
+
+nextState : Model -> Model
+nextState model =
+    case ( model.nextStates, model.currentEnv, model.currentAST ) of
+        ( Just ((( env, ast ) as state) :: rest), Just curEnv, Just curAst ) ->
+            let
+                currentState =
+                    ( curEnv, curAst )
+
+                newPrevStates =
+                    case model.previousStates of
+                        Nothing ->
+                            [ currentState ]
+
+                        Just xs ->
+                            currentState :: xs
+
+                newNextStates =
+                    rest
+            in
+            { model | currentAST = Just ast, currentEnv = Just env, nextStates = Just newNextStates, previousStates = Just newPrevStates }
+
+        _ ->
+            model
+
+
+previousState : Model -> Model
+previousState model =
+    case ( model.previousStates, model.currentEnv, model.currentAST ) of
+        ( Just (( env, ast ) :: rest), Just curEnv, Just curAst ) ->
+            let
+                currentState =
+                    ( curEnv, curAst )
+
+                newNextStates =
+                    case model.nextStates of
+                        Nothing ->
+                            [ currentState ]
+
+                        Just xs ->
+                            currentState :: xs
+
+                newPreviousStates =
+                    rest
+            in
+            { model | currentAST = Just ast, currentEnv = Just env, nextStates = Just newNextStates, previousStates = Just newPreviousStates }
+
+        _ ->
+            model
+
 
 parseString : Model -> Model
 parseString model =
-    let
-        newAST =
-            Maybe.map parse model.textInput
-    in
-    { model | ast = newAST }
+    case model.textInput of
+        Nothing ->
+            model
+
+        Just str ->
+            let
+                newAST =
+                    parse str
+
+                states =
+                    eval newAST
+
+                mFinalState =
+                    List.head states
+
+                statesReversed =
+                    List.reverse states
+            in
+            { model
+                | currentAST = Just newAST
+                , currentEnv = Just Dict.empty
+                , nextStates = Just statesReversed
+                , previousStates = Just []
+                , finalResult = Maybe.map Tuple.second mFinalState
+            }
 
 
 
---<| eval "function foo x y = x + y; foo (3,4);"
 -- HELPERS
 
 

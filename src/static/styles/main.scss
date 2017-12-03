@@ -21,7 +21,25 @@ $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
     width: 100%;
 }
 
+.env {
+    padding-left: 2rem;
+    width:20%;
+    display: flex; 
+    flex-direction: column;
+}
+
 .tree-container {
+    width: 80%;
+    height: 100%;
+    //border-radius: 10px;
+    margin-top: 2rem;
+    overflow-x: scroll;
+    overflow-y: scroll;
+}
+
+.ast-container {
+    display: flex;
+    flex-direction: row;
     width: 100%;
     height: 100%;
     //border-radius: 10px;

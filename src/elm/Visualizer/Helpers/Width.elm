@@ -3,8 +3,57 @@ module Visualizer.Helpers.Width exposing (..)
 import SimpleAST exposing (Expr(..))
 
 
-maxTreeWidth : Expr -> Int
-maxTreeWidth expr =
+-- maxTreeWidth : Expr -> Int
+-- maxTreeWidth expr =
+--     case expr of
+--         Num num ->
+--             maximum nodeWidth [ "Num", toString num ]
+--         Var str ->
+--             maximum nodeWidth [ "Var", str ]
+--         -- Neg expr ->
+--         --     maxTreeWidth expr
+--         Add expr1 expr2 ->
+--             2 * maximum maxTreeWidth [ expr1, expr2 ]
+--         Mul expr1 expr2 ->
+--             2 * maximum maxTreeWidth [ expr1, expr2 ]
+--         Sub expr1 expr2 ->
+--             2 * maximum maxTreeWidth [ expr1, expr2 ]
+--         LessThan expr1 expr2 ->
+--             2 * maximum maxTreeWidth [ expr1, expr2 ]
+--         BiggerThan expr1 expr2 ->
+--             2 * maximum maxTreeWidth [ expr1, expr2 ]
+--         Equal expr1 expr2 ->
+--             2 * maximum maxTreeWidth [ expr1, expr2 ]
+--         If boolExpr expr1 expr2 ->
+--             3 * maximum maxTreeWidth [ boolExpr, expr1, expr2 ]
+--         SetVar var body ->
+--             2 * Basics.max (nodeWidth var) (maxTreeWidth body)
+--         SetFun fName argNamesList body ->
+--             let
+--                 argsWidth =
+--                     List.sum <| List.map nodeWidth argNamesList
+--             in
+--             3 * Basics.max (Basics.max argsWidth <| nodeWidth fName) (maxTreeWidth body)
+--         Fun argNamesList body env ->
+--             let
+--                 argsWidth =
+--                     List.sum <| List.map nodeWidth argNamesList
+--             in
+--             3 * Basics.max (Basics.max argsWidth <| nodeWidth <| toString env) (maxTreeWidth body)
+--         Apply fName argList ->
+--             let
+--                 argsWidth =
+--                     List.sum <| List.map maxTreeWidth argList
+--             in
+--             2 * Basics.max (nodeWidth fName) argsWidth
+--         Seq exprList ->
+--             List.length exprList * maximum maxTreeWidth exprList
+--         Error str ->
+--             nodeWidth str
+
+
+treeWidth : Expr -> Int
+treeWidth expr =
     case expr of
         Num num ->
             maximum nodeWidth [ "Num", toString num ]
@@ -12,50 +61,57 @@ maxTreeWidth expr =
         Var str ->
             maximum nodeWidth [ "Var", str ]
 
-        Neg expr ->
-            maxTreeWidth expr
-
         Add expr1 expr2 ->
-            2 * maximum maxTreeWidth [ expr1, expr2 ]
+            treeWidth expr1 + treeWidth expr2 + marginBetween
 
         Mul expr1 expr2 ->
-            2 * maximum maxTreeWidth [ expr1, expr2 ]
+            treeWidth expr1 + treeWidth expr2 + marginBetween
 
         Sub expr1 expr2 ->
-            2 * maximum maxTreeWidth [ expr1, expr2 ]
+            treeWidth expr1 + treeWidth expr2 + marginBetween
 
         LessThan expr1 expr2 ->
-            2 * maximum maxTreeWidth [ expr1, expr2 ]
+            treeWidth expr1 + treeWidth expr2 + marginBetween
+
+        BiggerThan expr1 expr2 ->
+            treeWidth expr1 + treeWidth expr2 + marginBetween
+
+        Equal expr1 expr2 ->
+            treeWidth expr1 + treeWidth expr2 + marginBetween
 
         If boolExpr expr1 expr2 ->
-            3 * maximum maxTreeWidth [ boolExpr, expr1, expr2 ]
+            2 * marginBetween + (List.sum <| List.map treeWidth [ boolExpr, expr1, expr2 ])
 
         SetVar var body ->
-            2 * Basics.max (nodeWidth var) (maxTreeWidth body)
+            nodeWidth var + treeWidth body
 
         SetFun fName argNamesList body ->
             let
                 argsWidth =
-                    List.sum <| List.map nodeWidth argNamesList
+                    List.sum <| List.map ((+) marginBetween << nodeWidth << toString) argNamesList
             in
-            3 * Basics.max (Basics.max argsWidth <| nodeWidth fName) (maxTreeWidth body)
+            2 * marginBetween + argsWidth + nodeWidth fName + treeWidth body
 
         Fun argNamesList body env ->
             let
                 argsWidth =
-                    List.sum <| List.map nodeWidth argNamesList
+                    List.sum <| List.map ((+) marginBetween << nodeWidth << toString) argNamesList
             in
-            3 * Basics.max (Basics.max argsWidth <| nodeWidth <| toString env) (maxTreeWidth body)
+            marginBetween + argsWidth + nodeWidth "Env" + treeWidth body
 
         Apply fName argList ->
             let
                 argsWidth =
-                    List.sum <| List.map maxTreeWidth argList
+                    List.sum <| List.map treeWidth argList
             in
-            2 * Basics.max (nodeWidth fName) argsWidth
+            marginBetween + nodeWidth fName + argsWidth
 
         Seq exprList ->
-            List.length exprList * maximum maxTreeWidth exprList
+            let
+                margin =
+                    (List.length exprList - 1) * marginBetween
+            in
+            margin + (List.sum <| List.map treeWidth exprList)
 
         Error str ->
             nodeWidth str
@@ -63,7 +119,7 @@ maxTreeWidth expr =
 
 nodeWidth : String -> Int
 nodeWidth name =
-    String.length name * wFACTOR + marginBetween
+    String.length name * wFACTOR + 10
 
 
 maximum : (a -> Int) -> List a -> Int
@@ -73,9 +129,9 @@ maximum widthFunction list =
 
 marginBetween : Int
 marginBetween =
-    10
+    35
 
 
 wFACTOR : Int
 wFACTOR =
-    9
+    11
