@@ -1,4 +1,4 @@
-module Parser.Tokenizer exposing (tokenize)
+module Parser.Tokenizer exposing (isVariableChar, tokenize)
 
 import Char
 import ListHelpers exposing (removeWs, span)
@@ -77,7 +77,7 @@ tokenize charList =
             else if Char.isLower c then
                 let
                     ( var, rest1 ) =
-                        span isVariable str
+                        span isVariableChar str
                 in
                 String.fromList var :: tokenize rest1
             else
@@ -87,6 +87,6 @@ tokenize charList =
             []
 
 
-isVariable : Char -> Bool
-isVariable c =
+isVariableChar : Char -> Bool
+isVariableChar c =
     Char.isLower c || Char.isUpper c || Char.isDigit c || c == '_' || c == '-'

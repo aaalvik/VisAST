@@ -22,6 +22,9 @@ eval expr =
                 Just ( _, Num num ) ->
                     states
 
+                Just ( _, Fun _ _ _ ) ->
+                    states
+
                 Just ( _, a ) ->
                     Debug.log ("evaluated expression must return Int in the end, got this: " ++ toString a) []
 
@@ -133,7 +136,10 @@ stepOne env expr =
                         |> (,) env
 
                 Just (Fun argNames body localEnv) ->
-                    if List.all Helpers.isVal args then
+                    if List.length argNames /= List.length args then
+                        (Error <| "Function " ++ funName ++ " was applied to wrong number of arguments")
+                            |> (,) env
+                    else if List.all Helpers.isVal args then
                         let
                             namesAndVals =
                                 List.map2 (,) argNames args

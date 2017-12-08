@@ -1,7 +1,8 @@
 module Parser.SimpleParser exposing (parse)
 
+import Char
 import Parser.ParserHelper exposing (..)
-import Parser.Tokenizer exposing (tokenize)
+import Parser.Tokenizer as Tokenizer exposing (tokenize)
 import SimpleAST exposing (..)
 import Stack exposing (..)
 
@@ -84,18 +85,24 @@ parseExpr exprStack opStack strList =
                 argNamesSplitOnComma =
                     List.concat <| splitOnComma argNames
             in
-            case rest1 of
-                "=" :: rest2 ->
-                    parseExpr exprStack (push (SetOp <| SetFun fName argNamesSplitOnComma) opStack) rest2
+            if validName fName then
+                case rest1 of
+                    "=" :: rest2 ->
+                        parseExpr exprStack (push (SetOp <| SetFun fName argNamesSplitOnComma) opStack) rest2
 
-                xs ->
-                    ( push (Error <| "function declaration must have '=' before body, was: " ++ toString xs) exprStack, opStack )
+                    xs ->
+                        ( push (Error <| "function declaration must have '=' before body, was: " ++ toString xs) exprStack, opStack )
+            else
+                ( push (Error <| "Invalid function name: " ++ fName) exprStack, opStack )
 
         "function" :: _ ->
             ( push (Error "syntax error for function declaration") exprStack, opStack )
 
         "set" :: vName :: "=" :: rest ->
-            parseExpr exprStack (push (SetOp <| SetVar vName) opStack) rest
+            if validName vName then
+                parseExpr exprStack (push (SetOp <| SetVar vName) opStack) rest
+            else
+                ( push (Error <| "Invalid variable name: " ++ vName) exprStack, opStack )
 
         "set" :: _ ->
             ( push (Error "syntax error for set-variable") exprStack, opStack )
@@ -114,17 +121,6 @@ parseExpr exprStack opStack strList =
 
                 exprArgs =
                     List.map (parse << String.join " ") argsSplitOnComma
-
-                -- exprArgs =
-                --     List.map
-                --         (\argStr ->
-                --             case String.toInt argStr of
-                --                 Ok num ->
-                --                     Num num
-                --                 Err _ ->
-                --                     Var argStr
-                --         )
-                --         argStrs
             in
             parseExpr (push (Apply fName exprArgs) exprStack) opStack rest1
 
@@ -263,3 +259,23 @@ applyUnOp op mExpr =
 
         Nothing ->
             Error <| "Unary operator " ++ toString op ++ " needs one argument, but arguments was Nothing."
+
+
+keywords : List String
+keywords =
+    [ "function", "set" ]
+
+
+validName : String -> Bool
+validName name =
+    let
+        firstChar =
+            String.left 1 name
+
+        validFirstChar =
+            String.all Char.isLower firstChar
+
+        notKeyword s =
+            not <| List.member s keywords
+    in
+    notKeyword name && validFirstChar && String.all Tokenizer.isVariableChar name

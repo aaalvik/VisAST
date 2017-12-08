@@ -21,6 +21,9 @@ eval str =
                 ( _, Num num ) ->
                     num
 
+                ( _, Fun fName _ _ ) ->
+                    Debug.log "Function in the last expression, returning -1" -1
+
                 ( _, a ) ->
                     Debug.log ("evaluated expression must return Int in the end, got this: " ++ toString a) -1
 
@@ -132,17 +135,21 @@ evalExpr env expr =
                         |> (,) env
 
                 Just (Fun argNames body localEnv) ->
-                    let
-                        argVals =
-                            List.map (\arg -> Tuple.second <| evalExpr env arg) args
+                    if List.length argNames /= List.length args then
+                        (Error <| "Function " ++ funName ++ " was applied to wrong number of arguments")
+                            |> (,) env
+                    else
+                        let
+                            argVals =
+                                List.map (\arg -> Tuple.second <| evalExpr env arg) args
 
-                        namesAndVals =
-                            List.map2 (,) argNames argVals
+                            namesAndVals =
+                                List.map2 (,) argNames argVals
 
-                        newLocalEnv =
-                            List.foldl (\( name, val ) newEnv -> Dict.insert name val newEnv) localEnv namesAndVals
-                    in
-                    evalExpr newLocalEnv body
+                            newLocalEnv =
+                                List.foldl (\( name, val ) newEnv -> Dict.insert name val newEnv) localEnv namesAndVals
+                        in
+                        evalExpr newLocalEnv body
 
                 Just a ->
                     (Error <| "Only functions can be applied to things, this was: " ++ toString a)
