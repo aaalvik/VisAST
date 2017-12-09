@@ -1,21 +1,20 @@
-# Parse tree and evaluation visualizer
+# Abstract syntax tree and evaluation visualizer
 
-This is a school project where the goal was to visualize a parse tree and evaluation of my own language step-by-step using Elm. I implemented a simple imperative language, which I then defined both a big-step and a small-step evaluator for. I used the big-step evaluator for getting the final result quickly, and the small-step for visualizing every step during evaluation. 
+This is a school project where the goal was to visualize an abstract syntax tree and evaluation of my own language step-by-step using Elm. I implemented a simple imperative language, which I then defined both a big-step and a small-step evaluator for. I used the big-step evaluator for getting the final result quickly, and the small-step for visualizing every step during evaluation. 
 
 ### Syntax for the language: 
 ```
 stmt := <expr> `;` <stmt> | <expr>
 
 expr 
-    := 
-     | <int>                                          // integer
+    := <int>                                          // integer
      | <var>                                          // variable
-     | <expr> * <expr>                                // multiplication
-     | <expr> + <expr>                                // addition
-     | <expr> - <expr>                                // subtraction
-     | <expr> < <expr>                                // less than
-     | <expr> > <expr>                                // bigger than
-     | <expr> == <expr>                               // equality
+     | <expr> `*` <expr>                              // multiplication
+     | <expr> `+` <expr>                              // addition
+     | <expr> `-` <expr>                              // subtraction
+     | <expr> `<` <expr>                              // less than
+     | <expr> `>` <expr>                              // bigger than
+     | <expr> `==` <expr>                             // equality
      | `if` <expr> `then` <expr> `else` <expr>        // if-sentence
      | `set` <var> `=` <expr>                         // variable assignment
      | function <var> `(` <argNames> `)` `=` <expr>   // function definition
@@ -32,11 +31,11 @@ args := [<expr>]+
 
 ### General language features
 
-* Imperative language
-* No type checking
-* All values are immutable
-* Static scoping
-* Higher order functions
-* Only integer types
-
-There is no type safety here, but the purpose of this project was to visualize parse trees and step-by-step evaluation, so that was not a priority. 
+* **Imperative language**<br/>
+  You can create a sequence of expressions, and variables/functions defined in an expression will be in scope for expressions that come later in the sequence. 
+* **No type checking**<br/>
+  There is no type safety in my language yet, but the purpose of this project was to visualize abstract syntax trees and step-by-step evaluation, so that was not a priority.
+* **Immutable data and lexical scoping**<br/>
+  All values are immutable, like in haskell. You can set a variable that exists to something else, but this will be a new copy, not altering the variable. When returning from an inner scope the inner environment is discarded. 
+* **Higher order functions**<br/>
+  Functions can take functions as arguments. Not yet implemented lambdas. 
