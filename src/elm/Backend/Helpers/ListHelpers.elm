@@ -1,4 +1,4 @@
-module ListHelpers exposing (removeWs, span)
+module Backend.Helpers.ListHelpers exposing (removeWs, span)
 
 
 span : (a -> Bool) -> List a -> ( List a, List a )

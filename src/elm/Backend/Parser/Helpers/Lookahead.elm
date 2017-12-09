@@ -1,18 +1,11 @@
-module Parser.ParserHelper exposing (..)
+module Backend.Parser.Helpers.Lookahead exposing (..)
 
-import ListHelpers exposing (span)
+import Backend.Helpers.ListHelpers exposing (span)
 
 
 type PrecedenceType
     = PMul
     | PAdd
-      -- | PLessThan
-      -- | PEqual
-      -- | PIf
-      -- | PSet
-      -- | PFunction
-      -- | PVar
-      -- | PNum
     | PLast
 
 
@@ -33,14 +26,6 @@ lookaheadOp list =
         "+" :: _ ->
             PAdd
 
-        -- "-" :: _ ->
-        --     PSub
-        -- "if" :: _ ->
-        --     PIf
-        -- "set" :: _ ->
-        --     PSet
-        -- "function" :: _ ->
-        --     PFunction
         _ :: rest ->
             lookaheadOp rest
 

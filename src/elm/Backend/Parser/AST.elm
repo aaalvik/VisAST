@@ -1,4 +1,4 @@
-module SimpleAST exposing (..)
+module Backend.Parser.AST exposing (..)
 
 import Dict exposing (..)
 
@@ -15,7 +15,7 @@ type Expr
     | Equal Expr Expr
     | If Expr Expr Expr
     | SetVar String Expr -- set a = something
-    | SetFun String ArgNames Expr -- set foo ( a, b, c ) = something
+    | SetFun String ArgNames Expr -- function foo ( a, b, c ) = something
     | Fun ArgNames Expr Env
     | Apply String Args
     | Seq (List Expr)
@@ -37,3 +37,7 @@ type alias Env =
 type Type
     = TNum
     | TFun
+
+
+type alias State =
+    ( Env, Expr )

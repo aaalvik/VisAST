@@ -1,7 +1,7 @@
-module Parser.Tokenizer exposing (isVariableChar, tokenize)
+module Backend.Parser.Tokenizer exposing (isVariableChar, tokenize)
 
+import Backend.Helpers.ListHelpers exposing (removeWs, span)
 import Char
-import ListHelpers exposing (removeWs, span)
 
 
 tokenize : List Char -> List String

@@ -1,9 +1,9 @@
-module Visualizer.Tree exposing (..)
+module Frontend.Tree exposing (..)
 
-import SimpleAST exposing (Expr(..))
+import Backend.Parser.AST exposing (Expr(..))
+import Frontend.Helpers.Width exposing (marginBetween, nodeWidth, treeWidth)
 import Svg exposing (..)
 import Svg.Attributes as Attrs exposing (..)
-import Visualizer.Helpers.Width exposing (marginBetween, nodeWidth, treeWidth)
 
 
 type alias EdgePosition =

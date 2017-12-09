@@ -1,6 +1,6 @@
-module Visualizer.Helpers.Width exposing (..)
+module Frontend.Helpers.Width exposing (..)
 
-import SimpleAST exposing (Expr(..))
+import Backend.Parser.AST exposing (Expr(..))
 
 
 treeWidth : Expr -> Int

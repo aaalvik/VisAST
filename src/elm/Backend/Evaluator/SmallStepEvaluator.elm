@@ -1,10 +1,10 @@
-module Evaluator.SmallStepEvaluator exposing (eval)
+module Backend.Evaluator.SmallStepEvaluator exposing (eval)
 
+import Backend.Evaluator.BigStepEvaluator as BigStep
+import Backend.Evaluator.Helpers as Helpers
+import Backend.Helpers.ListHelpers exposing (span)
+import Backend.Parser.AST exposing (..)
 import Dict
-import Evaluator.BigStepEvaluator as BigStep
-import Evaluator.Helpers as Helpers exposing (State)
-import ListHelpers exposing (span)
-import SimpleAST exposing (..)
 
 
 eval : Expr -> List State

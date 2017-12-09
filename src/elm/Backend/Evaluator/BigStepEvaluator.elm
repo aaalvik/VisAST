@@ -1,9 +1,9 @@
-module Evaluator.BigStepEvaluator exposing (eval, evalExpr)
+module Backend.Evaluator.BigStepEvaluator exposing (eval, evalExpr)
 
+import Backend.Evaluator.Helpers as Helpers
+import Backend.Parser.AST exposing (..)
+import Backend.Parser.Parser exposing (parse)
 import Dict
-import Evaluator.Helpers as Helpers exposing (State)
-import Parser.SimpleParser exposing (parse)
-import SimpleAST exposing (..)
 
 
 eval : String -> Int

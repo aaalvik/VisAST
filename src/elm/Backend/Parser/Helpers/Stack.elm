@@ -1,6 +1,6 @@
-module Stack exposing (..)
+module Backend.Parser.Helpers.Stack exposing (..)
 
-import SimpleAST exposing (Expr)
+import Backend.Parser.AST exposing (Expr)
 
 
 type Stack a

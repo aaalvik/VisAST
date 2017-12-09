@@ -1,10 +1,6 @@
-module Evaluator.Helpers exposing (..)
+module Backend.Evaluator.Helpers exposing (..)
 
-import SimpleAST exposing (..)
-
-
-type alias State =
-    ( Env, Expr )
+import Backend.Parser.AST exposing (..)
 
 
 isVal : Expr -> Bool

@@ -1,10 +1,10 @@
-module Parser.SimpleParser exposing (parse)
+module Backend.Parser.Parser exposing (parse)
 
+import Backend.Parser.AST exposing (..)
+import Backend.Parser.Helpers.Lookahead exposing (..)
+import Backend.Parser.Helpers.Stack as Stack exposing (..)
+import Backend.Parser.Tokenizer as Tokenizer exposing (tokenize)
 import Char
-import Parser.ParserHelper exposing (..)
-import Parser.Tokenizer as Tokenizer exposing (tokenize)
-import SimpleAST exposing (..)
-import Stack exposing (..)
 
 
 parse : String -> Expr
