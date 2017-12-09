@@ -36,6 +36,6 @@ args := [<expr>]+
 * No type checking
   There is no type safety in my language yet, but the purpose of this project was to visualize abstract syntax trees and step-by-step evaluation, so that was not a priority.
 * Immutable data and static scoping
-  All values are immutable, like in haskell. You can set a variable that exists to something else, but this will be a new copy, not altering the variable. When returning from an inner scope the inner environment is discarded. 
+    All values are immutable, like in haskell. You can set a variable that exists to something else, but this will be a new copy, not altering the variable. When returning from an inner scope the inner environment is discarded. 
 * Higher order functions
-  Functions can take functions as arguments. Not yet implemented lambdas. 
+    Functions can take functions as arguments. Not yet implemented lambdas. 
