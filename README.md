@@ -7,15 +7,14 @@ This is a school project where the goal was to visualize an abstract syntax tree
 stmt := <expr> `;` <stmt> | <expr>
 
 expr 
-    := 
-     | <int>                                          // integer
+    := <int>                                          // integer
      | <var>                                          // variable
-     | <expr> * <expr>                                // multiplication
-     | <expr> + <expr>                                // addition
-     | <expr> - <expr>                                // subtraction
-     | <expr> < <expr>                                // less than
-     | <expr> > <expr>                                // bigger than
-     | <expr> == <expr>                               // equality
+     | <expr> `*` <expr>                              // multiplication
+     | <expr> `+` <expr>                              // addition
+     | <expr> `-` <expr>                              // subtraction
+     | <expr> `<` <expr>                              // less than
+     | <expr> `>` <expr>                              // bigger than
+     | <expr> `==` <expr>                             // equality
      | `if` <expr> `then` <expr> `else` <expr>        // if-sentence
      | `set` <var> `=` <expr>                         // variable assignment
      | function <var> `(` <argNames> `)` `=` <expr>   // function definition
@@ -33,10 +32,10 @@ args := [<expr>]+
 ### General language features
 
 * Imperative language
+  You can create a sequence of expressions, and variables/functions defined in an expression will be in scope for expressions that come later in the sequence. 
 * No type checking
-* All values are immutable, like in haskell. You can set a variable that exists to something else, but this will be a new copy, not altering the variable in an outer scope. 
-* Static scoping
+  There is no type safety in my language yet, but the purpose of this project was to visualize abstract syntax trees and step-by-step evaluation, so that was not a priority.
+* Immutable data and static scoping
+  All values are immutable, like in haskell. You can set a variable that exists to something else, but this will be a new copy, not altering the variable. When returning from an inner scope the inner environment is discarded. 
 * Higher order functions
-* Only integer and function types
-
-There is no type safety here, but the purpose of this project was to visualize parse trees and step-by-step evaluation, so that was not a priority. 
+  Functions can take functions as arguments. Not yet implemented lambdas. 
