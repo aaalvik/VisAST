@@ -1,7 +1,5 @@
 module Backend.Parser.Helpers.Lookahead exposing (..)
 
-import Backend.Helpers.ListHelpers exposing (span)
-
 
 type PrecedenceType
     = PMul
@@ -54,20 +52,52 @@ precedenceNumber pType =
             100
 
 
+
+{- Reads from list until hit stop-string. Ignores things inside parentheses -}
+
+
 readTil : String -> List String -> ( List String, List String )
 readTil stopAt l =
     let
-        ( read, rest ) =
-            span (\x -> x /= stopAt) l
-    in
-    case rest of
-        x :: rest1 ->
-            ( read, rest1 )
+        stop x =
+            x == stopAt
 
-        [] ->
-            ( read, [] )
+        ( _, _, read ) =
+            List.foldl
+                (\x ( done, numOpened, seen ) ->
+                    if done then
+                        ( done, 0, seen )
+                    else if stop x && numOpened == 0 then
+                        ( True, 0, seen )
+                    else if x == "(" then
+                        ( done, numOpened + 1, seen ++ [ x ] )
+                    else if x == ")" then
+                        ( done, numOpened - 1, seen ++ [ x ] )
+                    else
+                        ( done, numOpened, seen ++ [ x ] )
+                )
+                ( False, 0, [] )
+                l
+
+        rest =
+            List.drop (List.length read + 1) l
+    in
+    ( read, rest )
+
+
+skip : String -> List String -> List String
+skip skipStr xs =
+    case xs of
+        c :: rest ->
+            if c == skipStr then
+                rest
+            else
+                xs
+
+        _ ->
+            xs
 
 
 skipTil : String -> List String -> List String
-skipTil stopAt l =
-    Tuple.second <| readTil stopAt l
+skipTil stopAt xs =
+    Tuple.second <| readTil stopAt xs

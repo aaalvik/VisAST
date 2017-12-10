@@ -30,6 +30,20 @@ parseLine =
     uncurry buildAST << parseExpr Stack.initialise Stack.initialise
 
 
+parseParens : List String -> ( Expr, List String )
+parseParens xs =
+    case xs of
+        "(" :: rest ->
+            let
+                ( insideParens, rest2 ) =
+                    readTil ")" rest
+            in
+            ( parseLine insideParens, rest2 )
+
+        _ ->
+            ( Error "Expected parentheses expression, but found no surrounding parenthesis", [] )
+
+
 parseExpr : ExprStack -> OpStack -> List String -> ( ExprStack, OpStack )
 parseExpr exprStack opStack strList =
     case strList of
@@ -64,19 +78,19 @@ parseExpr exprStack opStack strList =
 
         "if" :: rest ->
             let
-                ( condStrs, rest1 ) =
-                    readTil "then" rest
+                ( condExpr, rest1 ) =
+                    parseParens rest
 
-                ( thenStrs, rest2 ) =
-                    readTil "else" rest1
+                thenStrs =
+                    skip "then" rest1
 
-                condExpr =
-                    parseLine condStrs
+                ( thenExpr, rest2 ) =
+                    parseParens thenStrs
 
-                thenExpr =
-                    parseLine thenStrs
+                elseStrs =
+                    skip "else" rest2
             in
-            Debug.log ("rest: " ++ toString rest2) parseExpr exprStack (push (UnOp <| If condExpr thenExpr) opStack) rest2
+            Debug.log ("Rest: " ++ toString rest) parseExpr exprStack (push (UnOp <| If condExpr thenExpr) opStack) elseStrs
 
         {- function f (a, b, c) = something -}
         "function" :: fName :: "(" :: rest ->
@@ -215,12 +229,6 @@ buildAST exprStack opStack =
                     in
                     buildAST newExprStack opStack1
 
-                -- ( Just (IfOp op), opStack1 ) ->
-                --     let
-                --         newExprStack =
-                --             Stack.push (applyUnOp op mLastExpr) exprStack1
-                --     in
-                --     buildAST newExprStack opStack1
                 ( Just (SetOp op), opStack1 ) ->
                     case mLastExpr of
                         Just lastExpr ->

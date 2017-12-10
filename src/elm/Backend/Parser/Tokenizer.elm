@@ -7,6 +7,28 @@ import Char
 tokenize : List Char -> List String
 tokenize charList =
     case charList of
+        'f' :: 'u' :: 'n' :: 'c' :: 't' :: 'i' :: 'o' :: 'n' :: ' ' :: rest ->
+            "function" :: tokenize rest
+
+        'i' :: 'f' :: ' ' :: rest ->
+            "if" :: "(" :: tokenize rest
+
+        {- Adding extra parenthes because later there will be added two parentheses -}
+        'i' :: 'f' :: '(' :: rest ->
+            "if" :: "(" :: "(" :: tokenize rest
+
+        't' :: 'h' :: 'e' :: 'n' :: ' ' :: rest ->
+            ")" :: "then" :: "(" :: tokenize rest
+
+        't' :: 'h' :: 'e' :: 'n' :: '(' :: rest ->
+            ")" :: "then" :: "(" :: "(" :: tokenize rest
+
+        'e' :: 'l' :: 's' :: 'e' :: ' ' :: rest ->
+            ")" :: "else" :: tokenize rest
+
+        'e' :: 'l' :: 's' :: 'e' :: '(' :: rest ->
+            ")" :: "else" :: "(" :: tokenize rest
+
         ' ' :: rest ->
             tokenize rest
 
@@ -18,18 +40,6 @@ tokenize charList =
 
         's' :: 'e' :: 't' :: ' ' :: rest ->
             "set" :: tokenize rest
-
-        'f' :: 'u' :: 'n' :: 'c' :: 't' :: 'i' :: 'o' :: 'n' :: ' ' :: rest ->
-            "function" :: tokenize rest
-
-        'i' :: 'f' :: ' ' :: rest ->
-            "if" :: tokenize rest
-
-        't' :: 'h' :: 'e' :: 'n' :: ' ' :: rest ->
-            "then" :: tokenize rest
-
-        'e' :: 'l' :: 's' :: 'e' :: ' ' :: rest ->
-            "else" :: tokenize rest
 
         '*' :: rest ->
             "*" :: tokenize rest
