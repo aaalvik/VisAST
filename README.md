@@ -35,7 +35,9 @@ args := [<expr>]+
   You can create a sequence of expressions, and variables/functions defined in an expression will be in scope for expressions that come later in the sequence. 
 * **No type checking**<br/>
   There is no type safety in my language yet, but the purpose of this project was to visualize abstract syntax trees and step-by-step evaluation, so that was not a priority.
-* **Immutable data and lexical scoping**<br/>
-  All values are immutable, like in haskell. You can set a variable that exists to something else, but this will be a new copy, not altering the variable. When returning from an inner scope the inner environment is discarded. 
+* **Immutable data**<br/>
+  All values are immutable, like in haskell. 
+* **Lexical, nested scoping**<br/>
+  Variables can be shadowed. When returning from an inner scope the inner environment is discarded. 
 * **Higher order functions**<br/>
   Functions can take functions as arguments. Not yet implemented lambdas. 
