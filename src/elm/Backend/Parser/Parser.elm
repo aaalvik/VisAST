@@ -71,10 +71,12 @@ parseExpr exprStack opStack strList =
                     readTil "else" rest1
 
                 condExpr =
-                    parseExpr exprStack opStack condStrs
-                        |> uncurry buildAST
+                    parseLine condStrs
+
+                thenExpr =
+                    parseLine thenStrs
             in
-            parseExpr exprStack (push (IfOp <| If condExpr) opStack) (thenStrs ++ rest2)
+            Debug.log ("rest: " ++ toString rest2) parseExpr exprStack (push (UnOp <| If condExpr thenExpr) opStack) rest2
 
         {- function f (a, b, c) = something -}
         "function" :: fName :: "(" :: rest ->
@@ -213,13 +215,12 @@ buildAST exprStack opStack =
                     in
                     buildAST newExprStack opStack1
 
-                ( Just (IfOp op), opStack1 ) ->
-                    let
-                        newExprStack =
-                            Stack.push (applyBinOp op mSndLastExpr mLastExpr) exprStack2
-                    in
-                    buildAST newExprStack opStack1
-
+                -- ( Just (IfOp op), opStack1 ) ->
+                --     let
+                --         newExprStack =
+                --             Stack.push (applyUnOp op mLastExpr) exprStack1
+                --     in
+                --     buildAST newExprStack opStack1
                 ( Just (SetOp op), opStack1 ) ->
                     case mLastExpr of
                         Just lastExpr ->

@@ -18,7 +18,7 @@ type alias OpStack =
 type Op
     = BinOp (Expr -> Expr -> Expr)
     | UnOp (Expr -> Expr)
-    | IfOp (Expr -> Expr -> Expr)
+      --| IfOp (Expr -> Expr)
     | SetOp (Expr -> Expr)
 
 
