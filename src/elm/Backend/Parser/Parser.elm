@@ -66,6 +66,36 @@ parseExpr exprStack opStack strList =
         "==" :: rest ->
             parseBinOp exprStack opStack Equal PLast rest
 
+        -- {- Lambda application: (\varName -> some expression) (args) -}
+        -- "(" :: "\\" :: varName :: rest ->
+        --     if validName varName then
+        --         case rest of
+        --             "->" :: rest1 ->
+        --                 let
+        --                     ( bodyStrs, rest2 ) =
+        --                         readTil ")" rest1
+        --                 in
+        --                 ( exprStack, opStack )
+        --             xs ->
+        --                 ( push (Error <| "Lambda expression must have '->' before body, was: " ++ toString xs) exprStack, opStack )
+        --     else
+        --         ( push (Error <| "Invalid lambda variable: " ++ varName) exprStack, opStack )
+        {- Lambda: \varName -> some expression -}
+        "\\" :: varName :: rest ->
+            if validName varName then
+                case rest of
+                    "->" :: rest1 ->
+                        let
+                            body =
+                                parse <| String.join " " rest1
+                        in
+                        parseExpr (push (Lambda varName body) exprStack) opStack rest1
+
+                    xs ->
+                        ( push (Error <| "Lambda expression must have '->' before body, was: " ++ toString xs) exprStack, opStack )
+            else
+                ( push (Error <| "Invalid lambda variable: " ++ varName) exprStack, opStack )
+
         "(" :: rest ->
             let
                 ( insideParens, rest1 ) =
@@ -123,10 +153,7 @@ parseExpr exprStack opStack strList =
         "set" :: _ ->
             ( push (Error "syntax error for set-variable") exprStack, opStack )
 
-        {- Lambda -}
-        "\\" :: lamVar :: "->" :: rest ->
-            ( exprStack, opStack )
-
+        {- Apply: fName (args) -}
         fName :: "(" :: rest ->
             let
                 ( argStrs, rest1 ) =
