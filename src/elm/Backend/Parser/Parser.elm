@@ -67,44 +67,24 @@ parseExpr exprStack opStack strList =
             parseBinOp exprStack opStack Equal PLast rest
 
         -- {- Lambda application: (\varName -> some expression) (args) -}
-        -- "(" :: "\\" :: varName :: rest ->
-        --     if validName varName then
-        --         case rest of
-        --             "->" :: rest1 ->
-        --                 let
-        --                     ( bodyStrs, rest2 ) =
-        --                         readTil ")" rest1
-        --                 in
-        --                 ( exprStack, opStack )
-        --             xs ->
-        --                 ( push (Error <| "Lambda expression must have '->' before body, was: " ++ toString xs) exprStack, opStack )
-        --     else
-        --         ( push (Error <| "Invalid lambda variable: " ++ varName) exprStack, opStack )
+        "(" :: "\\" :: varName :: rest ->
+            {- TODO fix -}
+            let
+                ( bodyStrs, rest1 ) =
+                    readTil ")" rest
+
+                lambda =
+                    parseLambda varName bodyStrs
+            in
+            ( exprStack, opStack )
+
         {- Lambda: \varName -> some expression -}
         "\\" :: varName :: rest ->
-            if validName varName then
-                case rest of
-                    "->" :: rest1 ->
-                        let
-                            body =
-                                parse <| String.join " " rest1
-
-                            lambda =
-                                Lambda varName body
-
-                            isApplied =
-                                False
-                        in
-                        if isApplied then
-                            -- TODO: make ApplyLam lambda expr
-                            ( exprStack, opStack )
-                        else
-                            parseExpr (push lambda exprStack) opStack rest1
-
-                    xs ->
-                        ( push (Error <| "Lambda expression must have '->' before body, was: " ++ toString xs) exprStack, opStack )
-            else
-                ( push (Error <| "Invalid lambda variable: " ++ varName) exprStack, opStack )
+            let
+                lambda =
+                    parseLambda varName rest
+            in
+            ( push lambda exprStack, opStack )
 
         "(" :: rest ->
             let
@@ -232,6 +212,27 @@ parseBinOp exprStack opStack op pType rest =
         ( mergedExprStack, mergedOpStack )
     else
         parseExpr exprStack (Stack.push (BinOp op) opStack) rest
+
+
+parseLambda : String -> List String -> Expr
+parseLambda varName rest =
+    {- TODO implement -}
+    if validName varName then
+        case rest of
+            "->" :: rest1 ->
+                let
+                    body =
+                        parse <| String.join " " rest1
+
+                    lambda =
+                        Lambda varName body
+                in
+                lambda
+
+            xs ->
+                Error <| "Lambda expression must have '->' before body, was: " ++ toString xs
+    else
+        Error <| "Invalid lambda variable: " ++ varName
 
 
 buildAST : ExprStack -> OpStack -> Expr
