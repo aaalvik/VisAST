@@ -88,8 +88,18 @@ parseExpr exprStack opStack strList =
                         let
                             body =
                                 parse <| String.join " " rest1
+
+                            lambda =
+                                Lambda varName body
+
+                            isApplied =
+                                False
                         in
-                        parseExpr (push (Lambda varName body) exprStack) opStack rest1
+                        if isApplied then
+                            -- TODO: make ApplyLam lambda expr
+                            ( exprStack, opStack )
+                        else
+                            parseExpr (push lambda exprStack) opStack rest1
 
                     xs ->
                         ( push (Error <| "Lambda expression must have '->' before body, was: " ++ toString xs) exprStack, opStack )
@@ -165,7 +175,7 @@ parseExpr exprStack opStack strList =
                 exprArgs =
                     List.map (parse << String.join " ") argsSplitOnComma
             in
-            parseExpr (push (Apply fName exprArgs) exprStack) opStack rest1
+            parseExpr (push (ApplyFun fName exprArgs) exprStack) opStack rest1
 
         a :: rest ->
             case String.toInt a of

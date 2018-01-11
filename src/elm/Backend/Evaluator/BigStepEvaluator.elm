@@ -124,11 +124,13 @@ evalExpr env expr =
             in
             ( newEnv, fun )
 
-        Fun argNames body localEnv ->
-            Fun argNames body localEnv
-                |> (,) env
+        (Fun argNames body localEnv) as fun ->
+            ( env, fun )
 
-        Apply funName args ->
+        (Lambda lamStr body) as lambda ->
+            ( env, lambda )
+
+        ApplyFun funName args ->
             case Dict.get funName env of
                 Nothing ->
                     (Error <| "Function " ++ funName ++ " doesnt exist in env: " ++ toString env)
@@ -154,6 +156,10 @@ evalExpr env expr =
                 Just a ->
                     (Error <| "Only functions can be applied to things, this was: " ++ toString a)
                         |> (,) env
+
+        ApplyLam lambda expr ->
+            {- TODO fix -}
+            ( env, Error "TODO fix ApplyLambda" )
 
         Seq exprList ->
             List.foldl (\expr ( newEnv, _ ) -> evalExpr newEnv expr) ( env, Num -1 ) exprList

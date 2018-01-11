@@ -61,6 +61,9 @@ stepOne env expr =
         Fun argNames body localEnv ->
             ( env, expr )
 
+        Lambda lamStr body ->
+            ( env, expr )
+
         Var str ->
             case Dict.get str env of
                 Just expr ->
@@ -129,7 +132,7 @@ stepOne env expr =
             in
             ( newEnv, fun )
 
-        Apply funName args ->
+        ApplyFun funName args ->
             case Dict.get funName env of
                 Nothing ->
                     (Error <| "Function " ++ funName ++ " doesnt exist in env: " ++ toString env)
@@ -156,11 +159,14 @@ stepOne env expr =
                             nextArgVals =
                                 evalArgsSmallStep env args
                         in
-                        ( env, Apply funName nextArgVals )
+                        ( env, ApplyFun funName nextArgVals )
 
                 Just a ->
                     (Error <| "Only functions can be applied to things, this was: " ++ toString a)
                         |> (,) env
+
+        ApplyLam lambda expr ->
+            ( env, Error "TODO fix ApplyLam in small-step eval" )
 
         Seq exprList ->
             case exprList of

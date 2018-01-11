@@ -17,8 +17,9 @@ type Expr
     | SetVar String Expr -- set a = something
     | SetFun String ArgNames Expr -- function foo ( a, b, c ) = something
     | Fun ArgNames Expr Env
-    | Apply String Args
     | Lambda String Expr
+    | ApplyFun String Args
+    | ApplyLam Expr Expr -- First expr is going to be Lambda
     | Seq (List Expr)
     | Error String
 
