@@ -84,7 +84,7 @@ parseExpr exprStack opStack strList =
             if List.isEmpty rest1 then
                 ( push lambda exprStack, opStack )
             else
-                ( push lambdaApp exprStack, opStack )
+                parseExpr (push lambdaApp exprStack) opStack rest2
 
         {- Lambda value: \varName -> some expression -}
         "\\" :: varName :: rest ->

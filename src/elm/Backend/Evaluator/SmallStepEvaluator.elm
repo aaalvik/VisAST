@@ -25,6 +25,9 @@ eval expr =
                 Just ( _, Fun _ _ _ ) ->
                     states
 
+                Just ( _, Lambda _ _ ) ->
+                    states
+
                 Just ( _, a ) ->
                     Debug.log ("evaluated expression must return Int in the end, got this: " ++ toString a) []
 
@@ -40,6 +43,12 @@ evalExpr env expr prevStates =
     in
     case nextStep of
         ( env, Num num ) ->
+            nextStep :: prevStates
+
+        ( env, Fun _ _ _ ) ->
+            nextStep :: prevStates
+
+        ( env, Lambda _ _ ) ->
             nextStep :: prevStates
 
         ( env, Seq ((Error str) :: rest) ) ->

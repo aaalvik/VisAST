@@ -1,31 +1,27 @@
-module Backend.Evaluator.BigStepEvaluator exposing (eval, evalExpr)
+module Backend.Evaluator.BigStepEvaluator exposing (evalExpr)
 
 import Backend.Evaluator.Helpers as Helpers
 import Backend.Parser.AST exposing (..)
-import Backend.Parser.Parser exposing (parse)
 import Dict
 
 
-eval : String -> Int
-eval str =
-    let
-        expr =
-            parse str
-    in
-    case expr of
-        Error str ->
-            Debug.log ("Cannot evaluate - " ++ str) -1
-
-        _ ->
-            case evalExpr Dict.empty expr of
-                ( _, Num num ) ->
-                    num
-
-                ( _, Fun fName _ _ ) ->
-                    Debug.log "Function in the last expression, returning -1" -1
-
-                ( _, a ) ->
-                    Debug.log ("evaluated expression must return Int in the end, got this: " ++ toString a) -1
+-- eval : String -> Int
+-- eval str =
+--     let
+--         expr =
+--             parse str
+--     in
+--     case expr of
+--         Error str ->
+--             Debug.log ("Cannot evaluate - " ++ str) -1
+--         _ ->
+--             case evalExpr Dict.empty expr of
+--                 ( _, Num num ) ->
+--                     num
+--                 ( _, Fun fName _ _ ) ->
+--                     Debug.log "Function in the last expression, returning -1" -1
+--                 ( _, a ) ->
+--                     Debug.log ("evaluated expression must return Int in the end, got this: " ++ toString a) -1
 
 
 evalExpr : Env -> Expr -> State
