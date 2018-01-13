@@ -13,19 +13,19 @@ treeWidth expr =
             maximum nodeWidth [ "Var", str ]
 
         Add expr1 expr2 ->
-            treeWidth expr1 + treeWidth expr2 + marginBetween
+            marginBetween + treeWidth expr1 + treeWidth expr2
 
         Mul expr1 expr2 ->
-            treeWidth expr1 + treeWidth expr2 + marginBetween
+            marginBetween + treeWidth expr1 + treeWidth expr2
 
         Sub expr1 expr2 ->
-            treeWidth expr1 + treeWidth expr2 + marginBetween
+            marginBetween + treeWidth expr1 + treeWidth expr2
 
         LessThan expr1 expr2 ->
-            treeWidth expr1 + treeWidth expr2 + marginBetween
+            marginBetween + treeWidth expr1 + treeWidth expr2
 
         BiggerThan expr1 expr2 ->
-            treeWidth expr1 + treeWidth expr2 + marginBetween
+            marginBetween + treeWidth expr1 + treeWidth expr2
 
         Equal expr1 expr2 ->
             treeWidth expr1 + treeWidth expr2 + marginBetween
@@ -34,7 +34,7 @@ treeWidth expr =
             2 * marginBetween + (List.sum <| List.map treeWidth [ boolExpr, expr1, expr2 ])
 
         SetVar var body ->
-            nodeWidth var + treeWidth body
+            marginBetween + nodeWidth var + treeWidth body
 
         SetFun fName argNamesList body ->
             let
@@ -50,12 +50,18 @@ treeWidth expr =
             in
             marginBetween + argsWidth + nodeWidth "Env" + treeWidth body
 
-        Apply fName argList ->
+        Lambda lamName body ->
+            marginBetween + nodeWidth lamName + treeWidth body
+
+        ApplyFun fName argList ->
             let
                 argsWidth =
                     List.sum <| List.map treeWidth argList
             in
             marginBetween + nodeWidth fName + argsWidth
+
+        ApplyLam lambda arg ->
+            marginBetween + treeWidth lambda + treeWidth arg
 
         Seq exprList ->
             let
