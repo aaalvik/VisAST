@@ -53,7 +53,7 @@ treeWidth expr =
         Lambda lamName body ->
             marginBetween + nodeWidth lamName + treeWidth body
 
-        ApplyFun fName argList ->
+        Apply fName argList ->
             let
                 argsWidth =
                     List.sum <| List.map treeWidth argList

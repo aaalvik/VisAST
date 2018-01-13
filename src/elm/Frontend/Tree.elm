@@ -291,7 +291,7 @@ drawSubTree xMid y tree =
             in
             edges ++ drawNode xMid y "Fun" children
 
-        ApplyFun fName args ->
+        Apply fName args ->
             let
                 argWidths =
                     List.map treeWidth args

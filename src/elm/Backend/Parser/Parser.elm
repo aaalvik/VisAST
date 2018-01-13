@@ -163,7 +163,7 @@ parseExpr exprStack opStack strList =
                 exprArgs =
                     List.map (parse << String.join " ") argsSplitOnComma
             in
-            parseExpr (push (ApplyFun fName exprArgs) exprStack) opStack rest1
+            parseExpr (push (Apply fName exprArgs) exprStack) opStack rest1
 
         a :: rest ->
             let
@@ -172,11 +172,6 @@ parseExpr exprStack opStack strList =
             in
             parseExpr (push atom exprStack) opStack rest
 
-        -- case String.toInt a of
-        --     Ok num ->
-        --         parseExpr (push (Num num) exprStack) opStack rest
-        --     Err _ ->
-        --         parseExpr (push (Var a) exprStack) opStack rest
         [] ->
             ( exprStack, opStack )
 

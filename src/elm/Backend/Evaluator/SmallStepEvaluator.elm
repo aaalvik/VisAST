@@ -141,7 +141,7 @@ stepOne env expr =
             in
             ( newEnv, fun )
 
-        ApplyFun funName args ->
+        Apply funName args ->
             case Dict.get funName env of
                 Nothing ->
                     (Error <| "Function " ++ funName ++ " doesnt exist in env: " ++ toString env)
@@ -158,7 +158,19 @@ stepOne env expr =
                             nextArgVals =
                                 evalArgsSmallStep env args
                         in
-                        ( env, ApplyFun funName nextArgVals )
+                        ( env, Apply funName nextArgVals )
+
+                Just ((Lambda _ _) as lambda) ->
+                    let
+                        arg =
+                            case args of
+                                a :: _ ->
+                                    a
+
+                                [] ->
+                                    Error "Tried to apply an empty argument to a lambda"
+                    in
+                    stepOne env (ApplyLam lambda arg)
 
                 Just a ->
                     (Error <| "Only functions can be applied to things, this was: " ++ toString a)
