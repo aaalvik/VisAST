@@ -137,31 +137,41 @@ evalExpr env expr =
                         (Error <| "Function " ++ funName ++ " was applied to wrong number of arguments")
                             |> (,) env
                     else
-                        let
-                            argVals =
-                                List.map (\arg -> Tuple.second <| evalExpr env arg) args
-
-                            namesAndVals =
-                                List.map2 (,) argNames argVals
-
-                            newLocalEnv =
-                                List.foldl (\( name, val ) newEnv -> Dict.insert name val newEnv) localEnv namesAndVals
-                        in
-                        evalExpr newLocalEnv body
+                        evalApp argNames body args localEnv
 
                 Just a ->
                     (Error <| "Only functions can be applied to things, this was: " ++ toString a)
                         |> (,) env
 
-        ApplyLam lambda expr ->
-            {- TODO fix -}
-            ( env, Error "TODO fix ApplyLambda" )
+        ApplyLam lambda arg ->
+            case lambda of
+                Lambda lamVar body ->
+                    evalApp [ lamVar ] body [ arg ] env
+
+                --( env, Error "TODO fix ApplyLambda, OK" )
+                _ ->
+                    ( env, Error "Error: Lambda application must contain a lambda" )
 
         Seq exprList ->
             List.foldl (\expr ( newEnv, _ ) -> evalExpr newEnv expr) ( env, Num -1 ) exprList
 
         Error str ->
             ( env, Error str )
+
+
+evalApp : List String -> Expr -> List Expr -> Env -> State
+evalApp argNames body args env =
+    let
+        argVals =
+            List.map (\arg -> Tuple.second <| evalExpr env arg) args
+
+        namesAndVals =
+            List.map2 (,) argNames argVals
+
+        newEnv =
+            List.foldl (\( name, val ) newEnv -> Dict.insert name val newEnv) env namesAndVals
+    in
+    evalExpr newEnv body
 
 
 evalBinOp : Expr -> Expr -> Env -> (Int -> Int -> Int) -> Expr
