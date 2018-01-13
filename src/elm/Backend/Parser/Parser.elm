@@ -66,19 +66,27 @@ parseExpr exprStack opStack strList =
         "==" :: rest ->
             parseBinOp exprStack opStack Equal PLast rest
 
-        -- {- Lambda application: (\varName -> some expression) (args) -}
+        -- {- Lambda application: (\varName -> some expression) (arg) -}
         "(" :: "\\" :: varName :: rest ->
-            {- TODO fix -}
             let
                 ( bodyStrs, rest1 ) =
                     readTil ")" rest
 
                 lambda =
                     parseLambda varName bodyStrs
-            in
-            ( exprStack, opStack )
 
-        {- Lambda: \varName -> some expression -}
+                ( arg, rest2 ) =
+                    parseLambdaArg rest1
+
+                lambdaApp =
+                    ApplyLam lambda arg
+            in
+            if List.isEmpty rest1 then
+                ( push lambda exprStack, opStack )
+            else
+                ( push lambdaApp exprStack, opStack )
+
+        {- Lambda value: \varName -> some expression -}
         "\\" :: varName :: rest ->
             let
                 lambda =
@@ -158,13 +166,17 @@ parseExpr exprStack opStack strList =
             parseExpr (push (ApplyFun fName exprArgs) exprStack) opStack rest1
 
         a :: rest ->
-            case String.toInt a of
-                Ok num ->
-                    parseExpr (push (Num num) exprStack) opStack rest
+            let
+                atom =
+                    parseAtom a
+            in
+            parseExpr (push atom exprStack) opStack rest
 
-                Err _ ->
-                    parseExpr (push (Var a) exprStack) opStack rest
-
+        -- case String.toInt a of
+        --     Ok num ->
+        --         parseExpr (push (Num num) exprStack) opStack rest
+        --     Err _ ->
+        --         parseExpr (push (Var a) exprStack) opStack rest
         [] ->
             ( exprStack, opStack )
 
@@ -214,25 +226,55 @@ parseBinOp exprStack opStack op pType rest =
         parseExpr exprStack (Stack.push (BinOp op) opStack) rest
 
 
+parseAtom : String -> Expr
+parseAtom atom =
+    case String.toInt atom of
+        Ok num ->
+            Num num
+
+        Err _ ->
+            Var atom
+
+
 parseLambda : String -> List String -> Expr
 parseLambda varName rest =
-    {- TODO implement -}
     if validName varName then
         case rest of
             "->" :: rest1 ->
                 let
                     body =
                         parse <| String.join " " rest1
-
-                    lambda =
-                        Lambda varName body
                 in
-                lambda
+                Lambda varName body
 
             xs ->
                 Error <| "Lambda expression must have '->' before body, was: " ++ toString xs
     else
         Error <| "Invalid lambda variable: " ++ varName
+
+
+parseLambdaArg : List String -> ( Expr, List String )
+parseLambdaArg strs =
+    case strs of
+        "(" :: rest ->
+            let
+                ( insideParens, rest1 ) =
+                    readTil ")" rest
+
+                arg =
+                    parseLine insideParens
+            in
+            ( arg, rest1 )
+
+        x :: rest ->
+            let
+                atom =
+                    parseAtom x
+            in
+            ( atom, rest )
+
+        _ ->
+            ( Error "Lambda argument was empty", [] )
 
 
 buildAST : ExprStack -> OpStack -> Expr
