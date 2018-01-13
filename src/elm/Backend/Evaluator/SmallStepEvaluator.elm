@@ -152,17 +152,7 @@ stepOne env expr =
                         (Error <| "Function " ++ funName ++ " was applied to wrong number of arguments")
                             |> (,) env
                     else if List.all Helpers.isVal args then
-                        let
-                            namesAndVals =
-                                List.map2 (,) argNames args
-
-                            newLocalEnv =
-                                List.foldl (\( name, val ) newEnv -> Dict.insert name val newEnv) localEnv namesAndVals
-
-                            ( _, evaluatedBody ) =
-                                BigStep.evalExpr newLocalEnv body
-                        in
-                        ( env, evaluatedBody )
+                        BigStep.evalApp argNames body args localEnv
                     else
                         let
                             nextArgVals =
@@ -174,8 +164,24 @@ stepOne env expr =
                     (Error <| "Only functions can be applied to things, this was: " ++ toString a)
                         |> (,) env
 
-        ApplyLam lambda expr ->
-            ( env, Error "TODO fix ApplyLam in small-step eval" )
+        ApplyLam lambda arg ->
+            case lambda of
+                Lambda lamVar body ->
+                    if Helpers.isVal arg then
+                        let
+                            ( _, val ) =
+                                BigStep.evalApp [ lamVar ] body [ arg ] env
+                        in
+                        ( env, val )
+                    else
+                        let
+                            ( _, newArg ) =
+                                stepOne env arg
+                        in
+                        ( env, ApplyLam lambda newArg )
+
+                _ ->
+                    ( env, Error "Error: Lambda application must contain a lambda" )
 
         Seq exprList ->
             case exprList of

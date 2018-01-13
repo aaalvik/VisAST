@@ -1,4 +1,4 @@
-module Backend.Evaluator.BigStepEvaluator exposing (evalExpr)
+module Backend.Evaluator.BigStepEvaluator exposing (evalApp, evalExpr)
 
 import Backend.Evaluator.Helpers as Helpers
 import Backend.Parser.AST exposing (..)
@@ -148,7 +148,6 @@ evalExpr env expr =
                 Lambda lamVar body ->
                     evalApp [ lamVar ] body [ arg ] env
 
-                --( env, Error "TODO fix ApplyLambda, OK" )
                 _ ->
                     ( env, Error "Error: Lambda application must contain a lambda" )
 

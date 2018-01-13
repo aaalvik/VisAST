@@ -9,7 +9,14 @@ isVal expr =
         Num _ ->
             True
 
+        {- Unsure about this, needed for lambda application -}
+        Var _ ->
+            True
+
         Fun _ _ _ ->
+            True
+
+        Lambda _ _ ->
             True
 
         _ ->
