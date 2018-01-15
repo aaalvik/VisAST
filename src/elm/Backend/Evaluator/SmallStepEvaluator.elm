@@ -123,6 +123,13 @@ stepOne env expr =
                     in
                     ( newEnv, val )
 
+                (Lambda _ _) as lamb ->
+                    let
+                        newEnv =
+                            Dict.insert str lamb env
+                    in
+                    ( newEnv, lamb )
+
                 _ ->
                     let
                         ( _, nextExpr ) =
@@ -217,6 +224,9 @@ stepOne env expr =
                 (Fun _ _ _) :: notEmptyRest ->
                     Debug.log "Throwing away result of fun, jumping to next expression in Seq" ( env, Seq notEmptyRest )
 
+                (Lambda _ _) :: notEmptyRest ->
+                    Debug.log "Throwing away result of lambda, jumping to next expression in Seq" ( env, Seq notEmptyRest )
+
                 (Error str) :: rest ->
                     ( env, Error str )
 
@@ -293,7 +303,8 @@ evalApp argNames body argVals env =
         newEnv =
             List.foldl (\( name, val ) newEnv -> Dict.insert name val newEnv) env namesAndVals
     in
-    stepOne newEnv body
+    --stepOne newEnv body
+    ( newEnv, body )
 
 
 evalEquation : Expr -> Expr -> (Int -> Int -> Bool) -> Env -> (Expr -> Expr -> Expr) -> State
