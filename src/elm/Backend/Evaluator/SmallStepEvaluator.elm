@@ -1,6 +1,5 @@
 module Backend.Evaluator.SmallStepEvaluator exposing (eval)
 
-import Backend.Evaluator.BigStepEvaluator as BigStep
 import Backend.Evaluator.Helpers as Helpers
 import Backend.Helpers.ListHelpers exposing (span)
 import Backend.Parser.AST exposing (..)
@@ -42,7 +41,7 @@ evalExpr env expr prevStates =
             stepOne env expr
     in
     case nextStep of
-        ( env, Num num ) ->
+        ( env, Num _ ) ->
             nextStep :: prevStates
 
         ( env, Fun _ _ _ ) ->
@@ -152,7 +151,7 @@ stepOne env expr =
                         (Error <| "Function " ++ funName ++ " was applied to wrong number of arguments")
                             |> (,) env
                     else if List.all Helpers.isVal args then
-                        BigStep.evalApp argNames body args localEnv
+                        evalApp argNames body args localEnv
                     else
                         let
                             nextArgVals =
@@ -182,7 +181,7 @@ stepOne env expr =
                     if Helpers.isVal arg then
                         let
                             ( _, val ) =
-                                BigStep.evalApp [ lamVar ] body [ arg ] env
+                                evalApp [ lamVar ] body [ arg ] env
                         in
                         ( env, val )
                     else
@@ -283,6 +282,18 @@ evalBinOp e1 e2 env op parentNode =
 
                 _ ->
                     ( newEnv, parentNode newLeftChild e2 )
+
+
+evalApp : List String -> Expr -> List Expr -> Env -> State
+evalApp argNames body argVals env =
+    let
+        namesAndVals =
+            List.map2 (,) argNames argVals
+
+        newEnv =
+            List.foldl (\( name, val ) newEnv -> Dict.insert name val newEnv) env namesAndVals
+    in
+    stepOne newEnv body
 
 
 evalEquation : Expr -> Expr -> (Int -> Int -> Bool) -> Env -> (Expr -> Expr -> Expr) -> State
