@@ -33,10 +33,7 @@ lookaheadOp list =
 
 hasHigherPrecedence : PrecedenceType -> PrecedenceType -> Bool
 hasHigherPrecedence nextP curP =
-    precedenceNumber nextP
-        < precedenceNumber curP
-        || nextP
-        == PLast
+    precedenceNumber nextP < precedenceNumber curP || nextP == PLast
 
 
 precedenceNumber : PrecedenceType -> Int
