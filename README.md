@@ -1,8 +1,8 @@
 # Abstract syntax tree and evaluation visualizer
 
-This is a school project where the goal was to visualize an abstract syntax tree and evaluation of my own language step-by-step using Elm. I implemented a simple imperative language, which I then defined both a big-step and a small-step evaluator for. I used the big-step evaluator for getting the final result quickly, and the small-step for visualizing every step during evaluation. 
+This is a school project where the goal was to visualize an abstract syntax tree and step-by-step evaluation of my own small language using Elm. I implemented a simple imperative language with and a small-step evaluator for visualizing every evaluation step. 
 
-### Installation and Use
+### Installation and Usage
 
 * You need the [npm](https://www.npmjs.com/) JavaScript package manager.
 * You also need [Elm](http://elm-lang.org/) – `npm install elm`.
