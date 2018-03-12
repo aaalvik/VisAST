@@ -2,6 +2,9 @@
 
 This is a school project where the goal was to visualize an abstract syntax tree and step-by-step evaluation of my own small language using Elm. I implemented a simple imperative language with and a small-step evaluator for visualizing every evaluation step. 
 
+## Examples
+![example-if](https://raw.githubusercontent.com/aaalvik/astvisualizer/master/src/static/screenshots/example-if.png)
+
 ### Installation and Usage
 
 * You need the [npm](https://www.npmjs.com/) JavaScript package manager.
