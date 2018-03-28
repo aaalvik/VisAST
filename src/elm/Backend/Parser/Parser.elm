@@ -12,9 +12,7 @@ parse str =
     let
         exprs =
             str
-                |> String.split ";"
-                |> List.filter (not << String.isEmpty)
-                -- filter: remove last empty str if semicolon in the end
+                |> splitIntoLines
                 |> List.map (parseLine << tokenize << String.toList)
     in
     case exprs of
@@ -23,6 +21,15 @@ parse str =
 
         xs ->
             Seq exprs
+
+
+splitIntoLines : String -> List String
+splitIntoLines str =
+    str
+        |> String.lines
+        |> List.map (String.split ";")
+        |> List.concat
+        |> List.filter (not << String.isEmpty)
 
 
 parseLine : List String -> Expr
