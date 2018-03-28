@@ -66,10 +66,10 @@ drawTree mTree =
         Just tree ->
             let
                 startX =
-                    500
+                    550
 
                 startY =
-                    50
+                    0
             in
             drawSubTree startX startY tree
                 |> svg [ class "tree" ]
