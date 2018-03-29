@@ -66,10 +66,10 @@ drawTree mTree =
         Just tree ->
             let
                 startX =
-                    500
+                    550
 
                 startY =
-                    50
+                    0
             in
             drawSubTree startX startY tree
                 |> svg [ class "tree" ]
@@ -86,9 +86,6 @@ drawSubTree xMid y tree =
 
         leftX =
             xMid - totalWidth // 2
-
-        -- rightX =
-        --     leftX + totalWidth
     in
     case tree of
         Num num ->
@@ -164,6 +161,52 @@ drawSubTree xMid y tree =
                         ++ drawSubTree bodyX newY body
             in
             edges ++ drawNode xMid y "SetVar" children
+
+        Lambda lamName body ->
+            let
+                nameWidth =
+                    nodeWidth (toString lamName)
+
+                bodyWidth =
+                    treeWidth body
+
+                nameX =
+                    leftX + nameWidth // 2 - marginBetween // 2
+
+                bodyX =
+                    nameX + nameWidth // 2 + bodyWidth // 2 + marginBetween
+
+                edges =
+                    drawEdges xMid y totalWidth [ nameWidth, bodyWidth ]
+
+                children =
+                    drawNode nameX newY (toString lamName) []
+                        ++ drawSubTree bodyX newY body
+            in
+            edges ++ drawNode xMid y "Lambda" children
+
+        ApplyLam lambda arg ->
+            let
+                lamWidth =
+                    treeWidth lambda
+
+                argWidth =
+                    treeWidth arg
+
+                lamX =
+                    leftX + lamWidth // 2 - marginBetween // 2
+
+                argX =
+                    lamX + lamWidth // 2 + argWidth // 2 + marginBetween
+
+                edges =
+                    drawEdges xMid y totalWidth [ lamWidth, argWidth ]
+
+                children =
+                    drawSubTree lamX newY lambda
+                        ++ drawSubTree argX newY arg
+            in
+            edges ++ drawNode xMid y "ApplyLam" children
 
         SetFun fName argNames body ->
             let

@@ -23,13 +23,16 @@ viewContent model =
     div [ class "content" ]
         [ div [ class "top-container" ]
             [ [ textInput
-              , button [ class "button btn", onClick ParseString ] [ text "Parse" ]
-              , button [ class "button btn", onClick PreviousState ] [ text "Previous" ]
-              , button [ class "button btn", onClick NextState ] [ text "Next" ]
+              , div [ class "buttons" ]
+                    [ button [ class "button btn", onClick ParseString ] [ text "Parse" ]
+                    , button [ class "button btn", onClick PreviousState ] [ text "Previous" ]
+                    , button [ class "button btn", onClick NextState ] [ text "Next" ]
+                    ]
               ]
                 |> div [ class "input-container" ]
-            , [ viewEval model.finalResult ]
-                |> h3 [ style [ ( "color", "white" ) ] ]
+
+            --, [ viewEval model.finalResult ]
+            --    |> h3 [ style [ ( "color", "white" ) ] ]
             ]
         , viewAST model
         ]
@@ -37,9 +40,9 @@ viewContent model =
 
 viewAST : Model -> Html Msg
 viewAST model =
-    [ viewEnv model.currentEnv
-        |> div [ class "env" ]
-    , [ Tree.drawTree model.currentAST ]
+    [ --viewEnv model.currentEnv
+      --  |> div [ class "env" ]
+      [ Tree.drawTree model.currentAST ]
         |> div [ class "tree-container" ]
     ]
         |> div
@@ -84,13 +87,25 @@ viewEnv mEnv =
 
 textInput : Html Msg
 textInput =
-    input
+    textarea
         [ class "input"
-        , placeholder "Skriv inn et uttrykk"
+        , cols 40
+        , rows 10
+        , placeholder "Insert code here..."
         , onInput UpdateString
-        , onKeyDown KeyDown
         ]
         []
+
+
+
+--cols 40, rows 10, placeholder "...", onInput ... ] []
+-- input
+--     [ class "input"
+--     , placeholder "Skriv inn et uttrykk"
+--     , onInput UpdateString
+--     --, onKeyDown KeyDown
+--     ]
+--     []
 
 
 onKeyDown : (Int -> msg) -> Attribute msg

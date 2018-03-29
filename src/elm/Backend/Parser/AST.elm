@@ -6,7 +6,6 @@ import Dict exposing (..)
 type Expr
     = Num Int
     | Var String
-      --| Neg Expr
     | Add Expr Expr
     | Mul Expr Expr
     | Sub Expr Expr
@@ -17,7 +16,9 @@ type Expr
     | SetVar String Expr -- set a = something
     | SetFun String ArgNames Expr -- function foo ( a, b, c ) = something
     | Fun ArgNames Expr Env
+    | Lambda String Expr
     | Apply String Args
+    | ApplyLam Expr Expr -- First expr is going to be Lambda
     | Seq (List Expr)
     | Error String
 

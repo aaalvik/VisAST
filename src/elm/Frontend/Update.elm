@@ -11,7 +11,7 @@ type Msg
     = NoOp
     | UpdateString String
     | ParseString
-    | KeyDown Int
+      --| KeyDown Int
     | NextState
     | PreviousState
 
@@ -34,12 +34,11 @@ update msg model =
         ParseString ->
             parseString model
 
-        KeyDown key ->
-            if key == 13 then
-                parseString model
-            else
-                model
-
+        -- KeyDown key ->
+        --     if key == 13 then
+        --         parseString model
+        --     else
+        --         model
         NextState ->
             Step.nextState model
 

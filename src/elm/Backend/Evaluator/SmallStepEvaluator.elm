@@ -1,6 +1,5 @@
 module Backend.Evaluator.SmallStepEvaluator exposing (eval)
 
-import Backend.Evaluator.BigStepEvaluator as BigStep
 import Backend.Evaluator.Helpers as Helpers
 import Backend.Helpers.ListHelpers exposing (span)
 import Backend.Parser.AST exposing (..)
@@ -25,6 +24,9 @@ eval expr =
                 Just ( _, Fun _ _ _ ) ->
                     states
 
+                Just ( _, Lambda _ _ ) ->
+                    states
+
                 Just ( _, a ) ->
                     Debug.log ("evaluated expression must return Int in the end, got this: " ++ toString a) []
 
@@ -39,7 +41,13 @@ evalExpr env expr prevStates =
             stepOne env expr
     in
     case nextStep of
-        ( env, Num num ) ->
+        ( env, Num _ ) ->
+            nextStep :: prevStates
+
+        ( env, Fun _ _ _ ) ->
+            nextStep :: prevStates
+
+        ( env, Lambda _ _ ) ->
             nextStep :: prevStates
 
         ( env, Seq ((Error str) :: rest) ) ->
@@ -59,6 +67,9 @@ stepOne env expr =
             ( env, expr )
 
         Fun argNames body localEnv ->
+            ( env, expr )
+
+        Lambda lamStr body ->
             ( env, expr )
 
         Var str ->
@@ -112,6 +123,13 @@ stepOne env expr =
                     in
                     ( newEnv, val )
 
+                (Lambda _ _) as lamb ->
+                    let
+                        newEnv =
+                            Dict.insert str lamb env
+                    in
+                    ( newEnv, lamb )
+
                 _ ->
                     let
                         ( _, nextExpr ) =
@@ -140,17 +158,7 @@ stepOne env expr =
                         (Error <| "Function " ++ funName ++ " was applied to wrong number of arguments")
                             |> (,) env
                     else if List.all Helpers.isVal args then
-                        let
-                            namesAndVals =
-                                List.map2 (,) argNames args
-
-                            newLocalEnv =
-                                List.foldl (\( name, val ) newEnv -> Dict.insert name val newEnv) localEnv namesAndVals
-
-                            ( _, evaluatedBody ) =
-                                BigStep.evalExpr newLocalEnv body
-                        in
-                        ( env, evaluatedBody )
+                        evalApp argNames body args localEnv
                     else
                         let
                             nextArgVals =
@@ -158,9 +166,40 @@ stepOne env expr =
                         in
                         ( env, Apply funName nextArgVals )
 
+                Just ((Lambda _ _) as lambda) ->
+                    let
+                        arg =
+                            case args of
+                                a :: _ ->
+                                    a
+
+                                [] ->
+                                    Error "Tried to apply an empty argument to a lambda"
+                    in
+                    stepOne env (ApplyLam lambda arg)
+
                 Just a ->
                     (Error <| "Only functions can be applied to things, this was: " ++ toString a)
                         |> (,) env
+
+        ApplyLam lambda arg ->
+            case lambda of
+                Lambda lamVar body ->
+                    if Helpers.isVal arg then
+                        let
+                            ( _, val ) =
+                                evalApp [ lamVar ] body [ arg ] env
+                        in
+                        ( env, val )
+                    else
+                        let
+                            ( _, newArg ) =
+                                stepOne env arg
+                        in
+                        ( env, ApplyLam lambda newArg )
+
+                _ ->
+                    ( env, Error "Error: Lambda application must contain a lambda" )
 
         Seq exprList ->
             case exprList of
@@ -184,6 +223,9 @@ stepOne env expr =
                 -- throw away result, but keep env
                 (Fun _ _ _) :: notEmptyRest ->
                     Debug.log "Throwing away result of fun, jumping to next expression in Seq" ( env, Seq notEmptyRest )
+
+                (Lambda _ _) :: notEmptyRest ->
+                    Debug.log "Throwing away result of lambda, jumping to next expression in Seq" ( env, Seq notEmptyRest )
 
                 (Error str) :: rest ->
                     ( env, Error str )
@@ -250,6 +292,19 @@ evalBinOp e1 e2 env op parentNode =
 
                 _ ->
                     ( newEnv, parentNode newLeftChild e2 )
+
+
+evalApp : List String -> Expr -> List Expr -> Env -> State
+evalApp argNames body argVals env =
+    let
+        namesAndVals =
+            List.map2 (,) argNames argVals
+
+        newEnv =
+            List.foldl (\( name, val ) newEnv -> Dict.insert name val newEnv) env namesAndVals
+    in
+    --stepOne newEnv body
+    ( newEnv, body )
 
 
 evalEquation : Expr -> Expr -> (Int -> Int -> Bool) -> Env -> (Expr -> Expr -> Expr) -> State

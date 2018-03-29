@@ -12,9 +12,7 @@ parse str =
     let
         exprs =
             str
-                |> String.split ";"
-                |> List.filter (not << String.isEmpty)
-                -- filter: remove last empty str if semicolon in the end
+                |> splitIntoLines
                 |> List.map (parseLine << tokenize << String.toList)
     in
     case exprs of
@@ -23,6 +21,15 @@ parse str =
 
         xs ->
             Seq exprs
+
+
+splitIntoLines : String -> List String
+splitIntoLines str =
+    str
+        |> String.lines
+        |> List.map (String.split ";")
+        |> List.concat
+        |> List.filter (not << String.isEmpty)
 
 
 parseLine : List String -> Expr
@@ -65,6 +72,34 @@ parseExpr exprStack opStack strList =
 
         "==" :: rest ->
             parseBinOp exprStack opStack Equal PLast rest
+
+        -- {- Lambda application: (\varName -> some expression) (arg) -}
+        "(" :: "\\" :: varName :: rest ->
+            let
+                ( bodyStrs, rest1 ) =
+                    readTil ")" rest
+
+                lambda =
+                    parseLambda varName bodyStrs
+
+                ( arg, rest2 ) =
+                    parseLambdaArg rest1
+
+                lambdaApp =
+                    ApplyLam lambda arg
+            in
+            if List.isEmpty rest1 then
+                ( push lambda exprStack, opStack )
+            else
+                parseExpr (push lambdaApp exprStack) opStack rest2
+
+        {- Lambda value: \varName -> some expression -}
+        "\\" :: varName :: rest ->
+            let
+                lambda =
+                    parseLambda varName rest
+            in
+            ( push lambda exprStack, opStack )
 
         "(" :: rest ->
             let
@@ -123,10 +158,7 @@ parseExpr exprStack opStack strList =
         "set" :: _ ->
             ( push (Error "syntax error for set-variable") exprStack, opStack )
 
-        {- Lambda -}
-        "\\" :: lamVar :: "->" :: rest ->
-            ( exprStack, opStack )
-
+        {- Apply: fName (args) -}
         fName :: "(" :: rest ->
             let
                 ( argStrs, rest1 ) =
@@ -141,12 +173,11 @@ parseExpr exprStack opStack strList =
             parseExpr (push (Apply fName exprArgs) exprStack) opStack rest1
 
         a :: rest ->
-            case String.toInt a of
-                Ok num ->
-                    parseExpr (push (Num num) exprStack) opStack rest
-
-                Err _ ->
-                    parseExpr (push (Var a) exprStack) opStack rest
+            let
+                atom =
+                    parseAtom a
+            in
+            parseExpr (push atom exprStack) opStack rest
 
         [] ->
             ( exprStack, opStack )
@@ -195,6 +226,57 @@ parseBinOp exprStack opStack op pType rest =
         ( mergedExprStack, mergedOpStack )
     else
         parseExpr exprStack (Stack.push (BinOp op) opStack) rest
+
+
+parseAtom : String -> Expr
+parseAtom atom =
+    case String.toInt atom of
+        Ok num ->
+            Num num
+
+        Err _ ->
+            Var atom
+
+
+parseLambda : String -> List String -> Expr
+parseLambda varName rest =
+    if validName varName then
+        case rest of
+            "->" :: rest1 ->
+                let
+                    body =
+                        parse <| String.join " " rest1
+                in
+                Lambda varName body
+
+            xs ->
+                Error <| "Lambda expression must have '->' before body, was: " ++ toString xs
+    else
+        Error <| "Invalid lambda variable: " ++ varName
+
+
+parseLambdaArg : List String -> ( Expr, List String )
+parseLambdaArg strs =
+    case strs of
+        "(" :: rest ->
+            let
+                ( insideParens, rest1 ) =
+                    readTil ")" rest
+
+                arg =
+                    parseLine insideParens
+            in
+            ( arg, rest1 )
+
+        x :: rest ->
+            let
+                atom =
+                    parseAtom x
+            in
+            ( atom, rest )
+
+        _ ->
+            ( Error "Lambda argument was empty", [] )
 
 
 buildAST : ExprStack -> OpStack -> Expr
