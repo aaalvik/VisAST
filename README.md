@@ -1,4 +1,4 @@
-# Abstract syntax tree and evaluation visualizer
+# VisAST: Generic AST Visualizer for Software Language Education
 
 This is a school project where the goal was to visualize an abstract syntax tree and step-by-step evaluation of my own small language using Elm. I implemented a simple imperative language with and a small-step evaluator for visualizing every evaluation step. 
 
